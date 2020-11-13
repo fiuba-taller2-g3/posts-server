@@ -49,35 +49,16 @@ def disconnect(conn):
         conn.close()
         print('Database connection closed.')
 
-def config(filename='database.ini', section='postgresql'):
-    # create a parser
-    parser = ConfigParser()
-    # read config file
-    parser.read(filename)
-
-    # get section, default to postgresql
-    db = {}
-    if parser.has_section(section):
-        params = parser.items(section)
-        for param in params:
-            db[param[0]] = param[1]
-    else:
-        raise Exception('Section {0} not found in the {1} file'.format(section, filename))
-
-    return db
-
-def use_db(commands):
+def use_db(conn, commands):
     if not isinstance(commands, list):
         commands = [commands]
-    conn = connect();
     cursor = conn.cursor()
     for command in commands:
         cursor.execute(command)
     conn.commit()
-    disconnect(conn)
+    cursor.close()
 
-def reset_db():
-    use_db([drop_all_cmd, create_users_table_cmd])
+def reset_db(conn):
+    use_db(conn, [drop_all_cmd, create_users_table_cmd])
 
-reset_db()
-# use_db(add_user_cmd("Holas","van"))
+# use_db(conn, add_user_cmd("Holas","van"))

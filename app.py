@@ -6,8 +6,16 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello():
+    response = 'db: UP\n'
+    conn = connect()
+    try:
+        use_db(conn,'SELECT NOW();')
+    except Exception as e:
+        response = "Error {}: {}\n".format(type(e).__name__, e.args)
+    finally:
+        disconnect(conn)
 
-    return 'Hello World!\n'
+    return response
 
 
 if __name__ == '__main__':
