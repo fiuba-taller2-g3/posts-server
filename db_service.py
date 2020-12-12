@@ -18,13 +18,19 @@ def add_post_query(user_id, price, date):
     return "\
                 INSERT INTO posts(user_id, price, date)\
                 VALUES ('{}', '{}', '{}')\
-                RETURNING id".format(user_id, price, date)
+                RETURNING *".format(user_id, price, date)
 
 def get_post_query(post_id):
     return "\
-                SELECT user_id, price, date FROM posts WHERE id = '{}'".format(post_id)
+                SELECT * FROM posts WHERE id = '{}'".format(post_id)
 
-def get_posts_query(user_id):
+def edit_post_cmd(price, date, is_blocked, post_id):
+    return "\
+                UPDATE posts SET price='{}', date='{}', is_blocked='{}' \
+                WHERE id='{}' \
+                RETURNING *".format(price, date, is_blocked, post_id)
+
+def get_posts_from_user_query(user_id):
     return "\
                 SELECT * FROM posts WHERE user_id = '{}'".format(user_id)
 
@@ -32,7 +38,7 @@ def delete_post_query(post_id):
     return "\
                 DELETE FROM posts\
                 WHERE id = '{}'\
-                RETURNING id".format(post_id)
+                RETURNING *".format(post_id)
 
 DROP_ALL_CMD = "\
                 DROP SCHEMA public CASCADE;\

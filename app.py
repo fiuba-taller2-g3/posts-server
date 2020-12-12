@@ -26,30 +26,32 @@ def reset_posts():
 @app.route('/posts', methods=['POST'])
 def new_post():
     body = request.json
-    post_id, = use_db(conn, add_post_query(body['user_id'], body['price'], body['date']))
-    return make_response(jsonify(id=post_id), 201)
+    post_id, user_id, price, date, is_blocked, = use_db(conn, add_post_query(body['user_id'], body['price'], body['date']))
+    return make_response(jsonify(id=post_id, user_id=user_id, price=price, date=date.strftime('%Y-%m-%d'), is_blocked=is_blocked), 201)
 
 @app.route('/posts/<post_id>')
 def visualize_post(post_id):
-    user_id, price, date = use_db(conn, get_post_query(post_id))
-    return make_response(jsonify(user_id=user_id, date=date.strftime('%Y-%m-%d') , price=price), 200)
+    post_id, user_id, price, date, is_blocked, = use_db(conn, get_post_query(post_id))
+    return make_response(jsonify(id=post_id, user_id=user_id, price=price, date=date.strftime('%Y-%m-%d'), is_blocked=is_blocked), 200)
 
 @app.route('/posts/<post_id>', methods=['PATCH'])
 def edit_post(post_id):
-    return use_db(conn, )
+    body = request.json
+    post_id, user_id, price, date, is_blocked, = use_db(conn, edit_post_cmd(body['price'], body['date'], body['is_blocked'], post_id))
+    return make_response(jsonify(id=post_id, user_id=user_id, price=price, date=date.strftime('%Y-%m-%d'), is_blocked=is_blocked), 201)
 
 @app.route('/posts/<post_id>', methods=['DELETE'])
 def delete_post(post_id):
-    id, = use_db(conn, delete_post_query(post_id))
-    return make_response("Post {} deleted successfully".format(id), 200)
+    post_id, user_id, price, date, is_blocked, = use_db(conn, delete_post_query(post_id))
+    return make_response(jsonify(id=post_id, user_id=user_id, price=price, date=date.strftime('%Y-%m-%d'), is_blocked=is_blocked), 200)
 
 @app.route('/posts')
 def visualize_posts_from_user():
     user_id = request.args.get('user_id')
-    posts = use_db(conn, get_posts_query(user_id))
+    posts = use_db(conn, get_posts_from_user_query(user_id))
     parsed_posts = []
-    for id, user_id, price, date, is_blocked in posts:
-        parsed_posts.append({"id":id, "user_id":user_id, "price":price, "date":date.strftime('%Y-%m-%d'), "is_blocked":is_blocked})
+    for post_id, user_id, price, date, is_blocked in posts:
+        parsed_posts.append({"id":post_id, "user_id":user_id, "price":price, "date":date.strftime('%Y-%m-%d'), "is_blocked":is_blocked})
     return make_response(jsonify(parsed_posts), 200)
 
 if __name__ == '__main__':
