@@ -1,5 +1,7 @@
 #!/usr/bin/python
 import psycopg2
+import os
+import urllib.parse as urlparse
 
 
 CREATE_POSTS_TABLE_CMD = "\
@@ -55,11 +57,13 @@ def connect():
     try:
         # connect to the PostgreSQL server
         print('Connecting to the PostgreSQL database...')
+        url = urlparse.urlparse(os.environ['DATABASE_URL'])
         conn = psycopg2.connect(
-            dbname = "postgres",
-            user = "postgres",
-            host = "psql-container",
-            password = "postgres"
+            dbname = url.path[1:],
+            user = url.username,
+            host = url.hostname,
+            password = url.password,
+            port = url.port
         )
 
         # create a cursor
