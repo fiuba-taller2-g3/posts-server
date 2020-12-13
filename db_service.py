@@ -82,12 +82,18 @@ def disconnect(conn):
 
 def set_db(conn, command):
     with conn.cursor() as cursor:
-        cursor.execute(command)
+        try:
+            cursor.execute(command)
+        except Exception as e:
+            print("Error {}: {}\n".format(type(e).__name__, e.args))
         conn.commit()
 
 def use_db(conn, command):
     with conn.cursor() as cursor:
-        cursor.execute(command)
+        try:
+            cursor.execute(command)
+        except Exception as e:
+            print("Error {}: {}\n".format(type(e).__name__, e.args))
         conn.commit()
         results = cursor.fetchall()
     # print(results)

@@ -12,10 +12,7 @@ set_db(conn, INIT_CMD)
 @app.route('/')
 def hello():
     response = 'db: UP\n'
-    try:
-        use_db(conn,'\SELECT NOW();')
-    except Exception as e:
-        response = "Error {}: {}\n".format(type(e).__name__, e.args)
+    use_db(conn,'SELECT NOW();')
     return response
 
 @app.route('/posts/reset', methods=['DELETE'])
