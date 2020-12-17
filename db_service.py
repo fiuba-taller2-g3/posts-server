@@ -10,31 +10,56 @@ CREATE_POSTS_TABLE_CMD = "\
                     user_id INT NOT NULL,\
                     price INT NOT NULL,\
                     date DATE NOT NULL,\
-                    is_blocked BOOLEAN DEFAULT false\
+                    is_blocked BOOLEAN DEFAULT false,\
+                    type VARCHAR(15)\
                 );\
                 "
 
-INIT_CMD = CREATE_POSTS_TABLE_CMD
+CREATE_BOOKINGS_TABLE_CMD = "\
+                CREATE TABLE IF NOT EXISTS bookings (\
+                    id SERIAL PRIMARY KEY,\
+                    user_id INT NOT NULL,\
+                    post_id INT REFERENCES posts(id),\
+                    beginDate DATE NOT NULL,\
+                    endDate DATE NOT NULL\
+                );\
+                "
 
-def add_post_query(user_id, price, date):
+INIT_CMD = CREATE_POSTS_TABLE_CMD + CREATE_BOOKINGS_TABLE_CMD
+
+def add_post_query(user_id, price, date, type):
     return "\
-                INSERT INTO posts(user_id, price, date)\
-                VALUES ('{}', '{}', '{}')\
-                RETURNING *".format(user_id, price, date)
+                INSERT INTO posts(user_id, price, date, type)\
+                VALUES ('{}', '{}', '{}', '{}')\
+                RETURNING *".format(user_id, price, date, type)
 
 def get_post_query(post_id):
     return "\
                 SELECT * FROM posts WHERE id = '{}'".format(post_id)
 
-def edit_post_cmd(price, date, is_blocked, post_id):
-    return "\
-                UPDATE posts SET price='{}', date='{}', is_blocked='{}' \
+def edit_post_cmd(post_id, **fields):
+    query = "\
+                UPDATE posts SET "
+    for key, value in fields.items():
+        query += "{}='{}', ".format(key, value)
+    query = query[:-2]
+    query += "\
                 WHERE id='{}' \
-                RETURNING *".format(price, date, is_blocked, post_id)
+                RETURNING *".format(post_id)
+    return query
 
-def get_posts_from_user_query(user_id):
-    return "\
-                SELECT * FROM posts WHERE user_id = '{}'".format(user_id)
+def get_posts_query(user_id, type, minPrice, maxPrice):
+    query = "\
+                SELECT * FROM posts WHERE id > 0 "
+    if user_id:
+        query += "AND user_id = '{}' ".format(user_id)
+    elif type:
+        query += "AND type = '{}' ".format(type)
+    elif maxPrice:
+        query += "AND price <= {} ".format(maxPrice)
+    elif minPrice:
+        query += "AND price >= {} ".format(minPrice)
+    return query
 
 def delete_post_query(post_id):
     return "\
@@ -88,7 +113,7 @@ def set_db(conn, command):
             print("Error {}: {}\n".format(type(e).__name__, e.args))
         conn.commit()
 
-def use_db(conn, command):
+def use_db(conn, command, many=False):
     with conn.cursor() as cursor:
         try:
             cursor.execute(command)
@@ -97,6 +122,6 @@ def use_db(conn, command):
         conn.commit()
         results = cursor.fetchall()
     # print(results)
-    if len(results) == 1:
+    if len(results) == 1 and not many:
         return results[0]
     return results
