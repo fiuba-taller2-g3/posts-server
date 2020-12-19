@@ -78,7 +78,8 @@ def edit_post_cmd(post_id, **fields):
 
 def get_posts_query(user_id, type, minPrice, maxPrice):
     query = "\
-                SELECT * FROM posts WHERE id > 0 "
+                SELECT * FROM posts\
+                WHERE id > 0 "
     if user_id:
         query += "AND user_id = '{}' ".format(user_id)
     elif type:

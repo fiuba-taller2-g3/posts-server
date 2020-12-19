@@ -49,10 +49,16 @@ def search_posts():
     type = request.args.get('type')
     minPrice = request.args.get('minPrice')
     maxPrice = request.args.get('maxPrice')
+    beginDate = request.args.get('beginDate')
+    endDate = request.args.get('endDate')
     posts = use_db(conn, get_posts_query(user_id, type, minPrice, maxPrice), many=True)
     parsed_posts = []
     for post_id, user_id, price, date, is_blocked, type in posts:
-        parsed_posts.append({"id":post_id, "user_id":user_id, "price":price, "date":date.strftime('%Y-%m-%d'), "is_blocked":is_blocked, "type":type})
+        overlap = False
+        if beginDate and endDate:
+            overlap, = use_db(conn, overlapping_bookings_count_query(post_id, beginDate, endDate))
+        if not overlap:
+            parsed_posts.append({"id":post_id, "user_id":user_id, "price":price, "date":date.strftime('%Y-%m-%d'), "is_blocked":is_blocked, "type":type})
     return make_response(jsonify(parsed_posts), 200)
 
 @app.route('/bookings', methods=['POST'])
