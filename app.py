@@ -15,7 +15,7 @@ def hello():
     use_db(conn,'SELECT NOW();')
     return response
 
-@app.route('/posts/reset', methods=['DELETE'])
+@app.route('/posts', methods=['DELETE'])
 def reset_posts():
     set_db(conn, RESET_CMD)
     return make_response("DB Reseted", 200)
@@ -54,6 +54,15 @@ def search_posts():
     for post_id, user_id, price, date, is_blocked, type in posts:
         parsed_posts.append({"id":post_id, "user_id":user_id, "price":price, "date":date.strftime('%Y-%m-%d'), "is_blocked":is_blocked, "type":type})
     return make_response(jsonify(parsed_posts), 200)
+
+@app.route('/bookings', methods=['POST'])
+def new_booking():
+    body = request.json
+    overlap, = use_db(conn, overlapping_bookings_count_query(body['post_id'], body['beginDate'], body['endDate']))
+    if overlap:
+        return make_response(jsonify({"error": "Alojamiento no disponible durante el rango de fechas ingresado"}), 409)
+    booking_id, user_id, post_id, beginDate, endDate, = use_db(conn, add_booking_query(body['user_id'], body['post_id'], body['beginDate'], body['endDate']))
+    return make_response(jsonify(post_id=post_id, user_id=user_id, booking_id=booking_id, beginDate=beginDate.strftime('%Y-%m-%d'), endDate=endDate.strftime('%Y-%m-%d')), 201)
 
 if __name__ == '__main__':
     try:

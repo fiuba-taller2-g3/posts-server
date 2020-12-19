@@ -25,13 +25,41 @@ CREATE_BOOKINGS_TABLE_CMD = "\
                 );\
                 "
 
+DROP_ALL_CMD = "\
+                DROP SCHEMA public CASCADE;\
+                CREATE SCHEMA public;\
+                GRANT ALL ON SCHEMA public TO postgres;\
+                GRANT ALL ON SCHEMA public TO public;\
+                "
+
 INIT_CMD = CREATE_POSTS_TABLE_CMD + CREATE_BOOKINGS_TABLE_CMD
+
+RESET_CMD = DROP_ALL_CMD + INIT_CMD
 
 def add_post_query(user_id, price, date, type):
     return "\
                 INSERT INTO posts(user_id, price, date, type)\
                 VALUES ('{}', '{}', '{}', '{}')\
                 RETURNING *".format(user_id, price, date, type)
+
+def add_booking_query(user_id, post_id, beginDate, endDate):
+    return "\
+                INSERT INTO bookings(user_id, post_id, beginDate, endDate)\
+                VALUES ('{}', '{}', '{}', '{}')\
+                RETURNING *".format(user_id, post_id, beginDate, endDate)
+
+def overlapping_bookings_count_query(post_id, beginDate, endDate):
+    return "\
+                SELECT COUNT(*)\
+                FROM bookings\
+                WHERE post_id='{}'\
+                AND (\
+                    (beginDate BETWEEN '{}' AND ('{}'::date - '1 day'::interval))\
+                    OR\
+                    (endDate BETWEEN ('{}'::date + '1 day'::interval) AND '{}')\
+                    OR\
+                    (beginDate < '{}' AND endDate > '{}')\
+                )".format(post_id, beginDate, endDate, beginDate, endDate, beginDate, endDate)
 
 def get_post_query(post_id):
     return "\
@@ -66,15 +94,6 @@ def delete_post_query(post_id):
                 DELETE FROM posts\
                 WHERE id = '{}'\
                 RETURNING *".format(post_id)
-
-DROP_ALL_CMD = "\
-                DROP SCHEMA public CASCADE;\
-                CREATE SCHEMA public;\
-                GRANT ALL ON SCHEMA public TO postgres;\
-                GRANT ALL ON SCHEMA public TO public;\
-                "
-
-RESET_CMD = DROP_ALL_CMD + INIT_CMD
 
 def connect():
     """ Connect to the PostgreSQL database server """
@@ -121,7 +140,7 @@ def use_db(conn, command, many=False):
             print("Error {}: {}\n".format(type(e).__name__, e.args))
         conn.commit()
         results = cursor.fetchall()
-    # print(results)
+    print(results)
     if len(results) == 1 and not many:
         return results[0]
     return results
