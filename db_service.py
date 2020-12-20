@@ -10,7 +10,9 @@ CREATE_POSTS_TABLE_CMD = "\
                     price INT NOT NULL,\
                     date DATE NOT NULL,\
                     is_blocked BOOLEAN DEFAULT false,\
-                    type VARCHAR(15)\
+                    type VARCHAR(15),\
+                    title VARCHAR(30),\
+                    description VARCHAR(100)\
                 );\
                 "
 
@@ -19,8 +21,8 @@ CREATE_BOOKINGS_TABLE_CMD = "\
                     id SERIAL PRIMARY KEY,\
                     user_id INT NOT NULL,\
                     post_id INT REFERENCES posts(id),\
-                    beginDate DATE NOT NULL,\
-                    endDate DATE NOT NULL\
+                    beginDate DATE,\
+                    endDate DATE\
                 );\
                 "
 
@@ -36,11 +38,11 @@ INIT_CMD = CREATE_POSTS_TABLE_CMD + CREATE_BOOKINGS_TABLE_CMD
 RESET_CMD = DROP_ALL_CMD + INIT_CMD
 
 
-def add_post_query(user_id, price, date, type):
+def add_post_query(user_id, price, date, type, title, description):
     return "\
-                INSERT INTO posts(user_id, price, date, type)\
-                VALUES ('{}', '{}', '{}', '{}')\
-                RETURNING *".format(user_id, price, date, type)
+                INSERT INTO posts(user_id, price, date, type, title, description )\
+                VALUES ('{}', '{}', '{}', '{}', '{}', '{}')\
+                RETURNING *".format(user_id, price, date, type, title, description)
 
 
 def add_booking_query(user_id, post_id, beginDate, endDate):
