@@ -53,7 +53,7 @@ def visualize_post(post_id):
     post_id, user_id, price, date, is_blocked, type, title, description, = use_db(conn, get_post_query(post_id))
     return make_response(
         jsonify(id=post_id, user_id=user_id, price=price, date=date.strftime('%Y-%m-%d'), is_blocked=is_blocked,
-                type=type, title=title, description=description, status=status), 200)
+                type=type, title=title, description=description), 200)
 
 
 @app.route('/posts/<post_id>', methods=['PATCH'])
