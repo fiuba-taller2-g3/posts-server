@@ -81,7 +81,7 @@ def search_posts():
     maxPrice = request.args.get('maxPrice')
     beginDate = request.args.get('beginDate')
     endDate = request.args.get('endDate')
-    posts = use_db(conn, get_posts_query(user_id, type, msiinPrice, maxPrice), many=True)
+    posts = use_db(conn, get_posts_query(user_id, type, minPrice, maxPrice), many=True)
     parsed_posts = []
     for post_id, user_id, price, date, is_blocked, type in posts:
         overlap = False
