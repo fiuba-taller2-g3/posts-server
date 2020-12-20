@@ -3,7 +3,6 @@ import psycopg2
 import os
 import urllib.parse as urlparse
 
-
 CREATE_POSTS_TABLE_CMD = "\
                 CREATE TABLE IF NOT EXISTS posts (\
                     id SERIAL PRIMARY KEY,\
@@ -36,17 +35,20 @@ INIT_CMD = CREATE_POSTS_TABLE_CMD + CREATE_BOOKINGS_TABLE_CMD
 
 RESET_CMD = DROP_ALL_CMD + INIT_CMD
 
+
 def add_post_query(user_id, price, date, type):
     return "\
                 INSERT INTO posts(user_id, price, date, type)\
                 VALUES ('{}', '{}', '{}', '{}')\
                 RETURNING *".format(user_id, price, date, type)
 
+
 def add_booking_query(user_id, post_id, beginDate, endDate):
     return "\
                 INSERT INTO bookings(user_id, post_id, beginDate, endDate)\
                 VALUES ('{}', '{}', '{}', '{}')\
                 RETURNING *".format(user_id, post_id, beginDate, endDate)
+
 
 def overlapping_bookings_count_query(post_id, beginDate, endDate):
     return "\
@@ -61,9 +63,11 @@ def overlapping_bookings_count_query(post_id, beginDate, endDate):
                     (beginDate < '{}' AND endDate > '{}')\
                 )".format(post_id, beginDate, endDate, beginDate, endDate, beginDate, endDate)
 
+
 def get_post_query(post_id):
     return "\
                 SELECT * FROM posts WHERE id = '{}'".format(post_id)
+
 
 def edit_post_cmd(post_id, **fields):
     query = "\
@@ -75,6 +79,7 @@ def edit_post_cmd(post_id, **fields):
                 WHERE id='{}' \
                 RETURNING *".format(post_id)
     return query
+
 
 def get_posts_query(user_id, type, minPrice, maxPrice):
     query = "\
@@ -90,11 +95,13 @@ def get_posts_query(user_id, type, minPrice, maxPrice):
         query += "AND price >= {} ".format(minPrice)
     return query
 
+
 def delete_post_query(post_id):
     return "\
                 DELETE FROM posts\
                 WHERE id = '{}'\
                 RETURNING *".format(post_id)
+
 
 def connect():
     """ Connect to the PostgreSQL database server """
@@ -104,26 +111,28 @@ def connect():
         print('Connecting to the PostgreSQL database...')
         url = urlparse.urlparse(os.environ['DATABASE_URL'])
         conn = psycopg2.connect(
-            dbname = url.path[1:],
-            user = url.username,
-            host = url.hostname,
-            password = url.password,
-            port = url.port
+            dbname=url.path[1:],
+            user=url.username,
+            host=url.hostname,
+            password=url.password,
+            port=url.port
         )
 
         # create a cursor
         cur = conn.cursor()
 
-	    # close the communication with the PostgreSQL
+        # close the communication with the PostgreSQL
         cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
     return conn
 
+
 def disconnect(conn):
     if conn is not None:
         conn.close()
         print('Database connection closed.')
+
 
 def set_db(conn, command):
     with conn.cursor() as cursor:
@@ -132,6 +141,7 @@ def set_db(conn, command):
         except Exception as e:
             print("Error {}: {}\n".format(type(e).__name__, e.args))
         conn.commit()
+
 
 def use_db(conn, command, many=False):
     with conn.cursor() as cursor:
