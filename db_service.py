@@ -40,7 +40,7 @@ RESET_CMD = DROP_ALL_CMD + INIT_CMD
 
 def add_post_query(user_id, price, date, type, title, description):
     return "\
-                INSERT INTO posts(user_id, price, date, type, title, description )\
+                INSERT INTO posts(user_id, price, date, type, title, description)\
                 VALUES ('{}', '{}', '{}', '{}', '{}', '{}')\
                 RETURNING *".format(user_id, price, date, type, title, description)
 
