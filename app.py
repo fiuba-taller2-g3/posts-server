@@ -64,18 +64,18 @@ def visualize_post(post_id):
 def edit_post(post_id):
     body = request.json
     body.pop("id", None)
-    post_id, user_id, price, date, is_blocked, type, = use_db(conn, edit_post_cmd(post_id, **body))
+    post_id, user_id, price, date, is_blocked, type, title, description, = use_db(conn, edit_post_cmd(post_id, **body))
     return make_response(
         jsonify(id=post_id, user_id=user_id, price=price, date=date.strftime('%Y-%m-%d'), is_blocked=is_blocked,
-                type=type), 201)
+                type=type, title=title, description=description), 201)
 
 
 @app.route('/posts/<post_id>', methods=['DELETE'])
 def delete_post(post_id):
-    post_id, user_id, price, date, is_blocked, type, = use_db(conn, delete_post_query(post_id))
+    post_id, user_id, price, date, is_blocked, type, title, description, = use_db(conn, delete_post_query(post_id))
     return make_response(
         jsonify(id=post_id, user_id=user_id, price=price, date=date.strftime('%Y-%m-%d'), is_blocked=is_blocked,
-                type=type), 200)
+                type=type, title=title, description=description), 200)
 
 
 @app.route('/posts')

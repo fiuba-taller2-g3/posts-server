@@ -70,6 +70,11 @@ def get_post_query(post_id):
     return "\
                 SELECT * FROM posts WHERE id = '{}'".format(post_id)
 
+def get_post_price_query(post_id):
+    return"\
+                SELECT price\
+                FROM posts\
+                WHERE id='{}'".format(post_id)
 
 def edit_post_cmd(post_id, **fields):
     query = "\
