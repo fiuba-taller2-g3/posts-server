@@ -31,9 +31,13 @@ def reset_posts():
 @app.route('/posts', methods=['POST'])
 def new_post():
     body = request.json
-    post_id, user_id, price, date, is_blocked, type, title, description, = use_db(conn, add_post_query(body['user_id'], body['price'],
-                                                                                   body['date'], body['type'],
-                                                                                   body['title'], body['description']))
+    post_id, user_id, price, date, is_blocked, type, title, description, = use_db(conn, add_post_query(body['user_id'],
+                                                                                                       body['price'],
+                                                                                                       body['date'],
+                                                                                                       body['type'],
+                                                                                                       body['title'],
+                                                                                                       body[
+                                                                                                           'description']))
     print('wallet_id', body['wallet_id'])
     print('price', body['price'])
     response = requests.post(payments_base_url + 'room',
@@ -97,15 +101,16 @@ def search_posts():
 @app.route('/bookings', methods=['POST'])
 def new_booking():
     body = request.json
-    overlap, = use_db(conn, overlapping_bookings_count_query(body['post_id'], body['beginDate'], body['endDate']))
+    overlap, = use_db(conn, overlapping_bookings_count_query(body['post_id'], body['begin_date'], body['end_date']))
     if overlap:
         return make_response(jsonify({"error": "Alojamiento no disponible durante el rango de fechas ingresado"}), 409)
-    booking_id, user_id, post_id, beginDate, endDate, = use_db(conn, add_booking_query(body['user_id'], body['post_id'],
-                                                                                       body['beginDate'],
-                                                                                       body['endDate']))
+    booking_id, user_id, post_id, begin_date, end_date, = use_db(conn,
+                                                                 add_booking_query(body['user_id'], body['post_id'],
+                                                                                   body['begin_date'],
+                                                                                   body['end_date']))
     return make_response(
-        jsonify(post_id=post_id, user_id=user_id, booking_id=booking_id, beginDate=beginDate.strftime('%Y-%m-%d'),
-                endDate=endDate.strftime('%Y-%m-%d')), 201)
+        jsonify(post_id=post_id, user_id=user_id, booking_id=booking_id, begin_date=begin_date.strftime('%Y-%m-%d'),
+                end_date=end_date.strftime('%Y-%m-%d')), 201)
 
 
 if __name__ == '__main__':
