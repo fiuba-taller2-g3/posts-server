@@ -102,7 +102,7 @@ def search_posts():
                                  "is_blocked": is_blocked, "type": type, "title": title, "description": description,
                                  "availability_dates": availability_dates, "availability_type": availability_type,
                                  "bathrooms": bathrooms, "bedrooms": bedrooms, "beds": beds, "beds_distribution": beds_distribution,
-                                 "images": images, "installations": installations, "location": location, "security": security,
+                                 "guests": guests, "images": images, "installations": installations, "location": location, "security": security,
                                  "services": services, "wallet_id": wallet_id})
     return make_response(jsonify(parsed_posts), 200)
 
