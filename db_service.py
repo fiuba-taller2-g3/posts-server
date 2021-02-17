@@ -2,17 +2,30 @@
 import psycopg2
 import os
 import urllib.parse as urlparse
-
+import json
 CREATE_POSTS_TABLE_CMD = "\
                 CREATE TABLE IF NOT EXISTS posts (\
                     id SERIAL PRIMARY KEY,\
-                    user_id INT NOT NULL,\
-                    price REAL NOT NULL,\
+                    availability_dates json NOT NULL,\
+                    availability_type VARCHAR(50) NOT NULL,\
+                    bathrooms VARCHAR(10) NOT NULL,\
+                    bedrooms VARCHAR(10) NOT NULL,\
+                    beds VARCHAR(10) NOT NULL,\
+                    beds_distribution JSON NOT NULL,\
                     date DATE NOT NULL,\
+                    description VARCHAR(100) NOT NULL,\
+                    guests VARCHAR(10) NOT NULL,\
+                    images json NOT NULL,\
+                    installations json NOT NULL,\
                     is_blocked BOOLEAN DEFAULT false,\
-                    type VARCHAR(15),\
+                    location json NOT NULL,\
+                    price INT NOT NULL,\
+                    security json NOT NULL,\
+                    services json NOT NULL,\
                     title VARCHAR(30),\
-                    description VARCHAR(100),\
+                    type VARCHAR(15),\
+                    user_id INT NOT NULL,\
+                    wallet_id INT NOT NULL,\
                     room_transaction VARCHAR(250)\
                 );\
                 "
@@ -45,12 +58,6 @@ INIT_CMD = CREATE_POSTS_TABLE_CMD + CREATE_BOOKINGS_TABLE_CMD + CREATE_BOOKINGS_
 RESET_CMD = DROP_ALL_CMD + INIT_CMD
 
 
-def add_post_query(user_id, price, date, type, title, description, roomTransaction):
-    return "\
-                INSERT INTO posts(user_id, price, date, type, title, description, room_transaction)\
-                VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')\
-                RETURNING *".format(user_id, price, date, type, title, description, roomTransaction)
-
 def get_bookings_query(guest_user_id, user_id, post_id, status, booking_id):
     query = "\
                 SELECT * FROM bookings \
@@ -68,6 +75,19 @@ def get_bookings_query(guest_user_id, user_id, post_id, status, booking_id):
     if post_id:
         query += "AND post_id='{}'".format(post_id)
     return query
+
+def add_post_query(body):
+    return "\
+                INSERT INTO posts(availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, " \
+                "date, description, guests, images, installations, is_blocked, location, price, security, services, title, type, user_id, wallet_id, room_transaction)\
+                VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')\
+                RETURNING *".format(json.dumps(body["availability_dates"]), body["availability_type"], body["bathrooms"],
+                                    body["bedrooms"],
+                                    body["beds"], json.dumps(body["beds_distribution"]), body["date"], body["description"], body["guests"],
+                                    json.dumps(body["images"]),
+                                    json.dumps(body["installations"]), body["is_blocked"], json.dumps(body["location"]), body["price"],
+                                    json.dumps(body["security"]),
+                                    json.dumps(body["services"]), body["title"], body["type"], body["user_id"], body["wallet_id"], body["room_transaction"])
 
 def add_booking_query(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate):
     return "\
@@ -123,6 +143,7 @@ def get_post_transaction_query(post_id):
                 SELECT room_transaction\
                 FROM posts\
                 WHERE id='{}'".format(post_id)
+
 
 def edit_post_cmd(post_id, **fields):
     query = "\

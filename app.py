@@ -32,8 +32,6 @@ def reset_posts():
 @app.route('/posts', methods=['POST'])
 def new_post():
     body = request.json
-    print('wallet_id', body['wallet_id'])
-    print('price', body['price'])
     response = requests.post(payments_base_url + 'room',
                              json={"creatorId": body['wallet_id'], "price": body['price']},
                              headers={'Content-Type': 'application/json'})
@@ -42,42 +40,51 @@ def new_post():
     if response.status_code == 200:
         print('new room: ', response.json()['roomTransaction'])
         roomTransaction = response.json()['roomTransaction']
-        post_id, user_id, price, date, is_blocked, type, title, description, roomTransaction = use_db(conn, add_post_query( body['user_id'],
-                                                                                                            body['price'],
-                                                                                                            body['date'],
-                                                                                                            body['type'],
-                                                                                                            body['title'],
-                                                                                                            body['description'],
-                                                                                                            roomTransaction))
+        body['room_transaction'] = roomTransaction
+        post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, installations, is_blocked, location, price, security, services, title, type, user_id, wallet_id, room_transaction, = use_db(conn, add_post_query(body))
         return make_response(
-            jsonify(id=post_id, user_id=user_id, price=price, date=date.strftime('%Y-%m-%d'), is_blocked=is_blocked,
-                    type=type, title=title, description=description, roomTransaction=roomTransaction), 201)
+        jsonify(id=post_id, user_id=user_id, price=price, date=date.strftime('%Y-%m-%d'), is_blocked=is_blocked,
+                type=type, title=title, description=description, availability_dates=availability_dates, availability_type=availability_type,
+                bathrooms=bathrooms, bedrooms=bedrooms, beds=beds, beds_distribution=beds_distribution, guests=guests, images=images,
+                installations=installations, location=location, security=security, services=services, wallet_id=wallet_id, room_transaction=room_transaction), 201)
 
 
 @app.route('/posts/<post_id>')
 def visualize_post(post_id):
-    post_id, user_id, price, date, is_blocked, type, title, description, roomTransaction, = use_db(conn, get_post_query(post_id))
+    post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, installations, is_blocked, location, price, security, services, title, type, user_id, wallet_id, room_transaction, = use_db(conn, get_post_query(post_id))
     return make_response(
         jsonify(id=post_id, user_id=user_id, price=price, date=date.strftime('%Y-%m-%d'), is_blocked=is_blocked,
-                type=type, title=title, description=description, roomTransaction=roomTransaction), 200)
+                type=type, title=title, description=description, availability_dates=availability_dates, availability_type=availability_type,
+                bathrooms=bathrooms, bedrooms=bedrooms, beds=beds, beds_distribution=beds_distribution, guests=guests, images=images,
+                installations=installations, location=location, security=security, services=services, wallet_id=wallet_id, room_transaction=room_transaction), 200)
 
 
 @app.route('/posts/<post_id>', methods=['PATCH'])
 def edit_post(post_id):
     body = request.json
     body.pop("id", None)
-    post_id, user_id, price, date, is_blocked, type, title, description, roomTransaction, = use_db(conn, edit_post_cmd(post_id, **body))
+    post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, installations, is_blocked, location, price, security, services, title, type, user_id, wallet_id, room_transaction, = use_db(conn, edit_post_cmd(post_id, **body))
     return make_response(
         jsonify(id=post_id, user_id=user_id, price=price, date=date.strftime('%Y-%m-%d'), is_blocked=is_blocked,
-                type=type, title=title, description=description, roomTransaction=roomTransaction), 201)
+                type=type, title=title, description=description, availability_dates=availability_dates,
+                availability_type=availability_type,
+                bathrooms=bathrooms, bedrooms=bedrooms, beds=beds, beds_distribution=beds_distribution, guests=guests,
+                images=images,
+                installations=installations, location=location, security=security, services=services,
+                wallet_id=wallet_id, room_transaction=room_transaction), 201)
 
 
 @app.route('/posts/<post_id>', methods=['DELETE'])
 def delete_post(post_id):
-    post_id, user_id, price, date, is_blocked, type, title, description, roomTransaction, = use_db(conn, delete_post_query(post_id))
+    post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, installations, is_blocked, location, price, security, services, title, type, user_id, wallet_id, room_transaction, = use_db(conn, delete_post_query(post_id))
     return make_response(
         jsonify(id=post_id, user_id=user_id, price=price, date=date.strftime('%Y-%m-%d'), is_blocked=is_blocked,
-                type=type, title=title, description=description, roomTransaction=roomTransaction), 200)
+                type=type, title=title, description=description, availability_dates=availability_dates,
+                availability_type=availability_type,
+                bathrooms=bathrooms, bedrooms=bedrooms, beds=beds, beds_distribution=beds_distribution, guests=guests,
+                images=images,
+                installations=installations, location=location, security=security, services=services,
+                wallet_id=wallet_id, room_transaction=room_transaction), 200)
 
 
 @app.route('/posts')
@@ -90,15 +97,17 @@ def search_posts():
     endDate = request.args.get('endDate')
     posts = use_db(conn, get_posts_query(user_id, type, minPrice, maxPrice), many=True)
     parsed_posts = []
-    for post_id, user_id, price, date, is_blocked, type, title, description, roomTransaction in posts:
+    for post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, installations, is_blocked, location, price, security, services, title, type, user_id, wallet_id, room_transaction, in posts:
         overlap = False
         if beginDate and endDate:
             overlap, = use_db(conn, overlapping_bookings_count_query(post_id, beginDate, endDate))
         if not overlap:
-            parsed_posts.append({   "id": post_id, "user_id": user_id,
-                                    "price": price, "date": date.strftime('%Y-%m-%d'),
-                                    "is_blocked": is_blocked, "type": type, "title": title,
-                                    "description": description, "room_transaction" : roomTransaction})
+            parsed_posts.append({"id": post_id, "user_id": user_id, "price": price, "date": date.strftime('%Y-%m-%d'),
+                                 "is_blocked": is_blocked, "type": type, "title": title, "description": description,
+                                 "availability_dates": availability_dates, "availability_type": availability_type,
+                                 "bathrooms": bathrooms, "bedrooms": bedrooms, "beds": beds, "beds_distribution": beds_distribution,
+                                 "guests": guests, "images": images, "installations": installations, "location": location, "security": security,
+                                 "services": services, "wallet_id": wallet_id, "room_transaction" : room_transaction})
     return make_response(jsonify(parsed_posts), 200)
 
 @app.route('/bookings', methods=['GET'])
