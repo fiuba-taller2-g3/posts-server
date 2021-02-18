@@ -16,11 +16,9 @@ CREATE_POSTS_TABLE_CMD = "\
                     description VARCHAR(100) NOT NULL,\
                     guests VARCHAR(10) NOT NULL,\
                     images json NOT NULL,\
-                    installations json NOT NULL,\
                     is_blocked BOOLEAN DEFAULT false,\
                     location json NOT NULL,\
                     price INT NOT NULL,\
-                    security json NOT NULL,\
                     services json NOT NULL,\
                     title VARCHAR(30),\
                     type VARCHAR(15),\
@@ -54,14 +52,12 @@ RESET_CMD = DROP_ALL_CMD + INIT_CMD
 def add_post_query(body):
     return "\
                 INSERT INTO posts(availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, " \
-                "date, description, guests, images, installations, is_blocked, location, price, security, services, title, type, user_id, wallet_id)\
+                "date, description, guests, images, is_blocked, location, price, services, title, type, user_id, wallet_id)\
                 VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')\
                 RETURNING *".format(json.dumps(body["availability_dates"]), body["availability_type"], body["bathrooms"],
                                     body["bedrooms"],
                                     body["beds"], json.dumps(body["beds_distribution"]), body["date"], body["description"], body["guests"],
-                                    json.dumps(body["images"]),
-                                    json.dumps(body["installations"]), body["is_blocked"], json.dumps(body["location"]), body["price"],
-                                    json.dumps(body["security"]),
+                                    json.dumps(body["images"]), body["is_blocked"], json.dumps(body["location"]), body["price"],
                                     json.dumps(body["services"]), body["title"], body["type"], body["user_id"], body["wallet_id"])
 
 
