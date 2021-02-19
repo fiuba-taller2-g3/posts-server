@@ -3,6 +3,7 @@ import psycopg2
 import os
 import urllib.parse as urlparse
 import json
+
 CREATE_POSTS_TABLE_CMD = "\
                 CREATE TABLE IF NOT EXISTS posts (\
                     id SERIAL PRIMARY KEY,\
@@ -74,23 +75,29 @@ def get_bookings_query(guest_user_id, user_id, post_id, status, booking_id):
         query += "AND post_id='{}'".format(post_id)
     return query
 
+
 def add_post_query(body):
     return "\
                 INSERT INTO posts(availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, " \
-                "date, description, guests, images, is_blocked, location, price, services, title, type, user_id, wallet_id, room_transaction)\
-                VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')\
-                RETURNING *".format(json.dumps(body["availability_dates"]), body["availability_type"], body["bathrooms"],
+           "date, description, guests, images, is_blocked, location, price, services, title, type, user_id, wallet_id, room_transaction)\
+                VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')\
+                RETURNING *".format(json.dumps(body["availability_dates"]), body["availability_type"],
+                                    body["bathrooms"],
                                     body["bedrooms"],
-                                    body["beds"], json.dumps(body["beds_distribution"]), body["date"], body["description"], body["guests"],
+                                    body["beds"], json.dumps(body["beds_distribution"]), body["date"],
+                                    body["description"], body["guests"],
                                     json.dumps(body["images"]),
                                     body["is_blocked"], json.dumps(body["location"]), body["price"],
-                                    json.dumps(body["services"]), body["title"], body["type"], body["user_id"], body["wallet_id"], body["room_transaction"])
+                                    json.dumps(body["services"]), body["title"], body["type"], body["user_id"],
+                                    body["wallet_id"], body["room_transaction"])
+
 
 def add_booking_query(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate):
     return "\
                 INSERT INTO bookings(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate)\
                 VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')\
                 RETURNING *".format(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate)
+
 
 def respond_booking_query(user_id, wallet_id, status, resTransaction, endDate, beginDate, guest_wallet_id, post_id):
     return "\
@@ -100,7 +107,8 @@ def respond_booking_query(user_id, wallet_id, status, resTransaction, endDate, b
                 AND beginDate='{}'\
                 AND guest_wallet_id='{}'\
                 AND post_id='{}'\
-                RETURNING *".format(user_id, wallet_id, status, resTransaction, endDate, beginDate, guest_wallet_id, post_id)
+                RETURNING *".format(user_id, wallet_id, status, resTransaction, endDate, beginDate, guest_wallet_id,
+                                    post_id)
 
 
 def overlapping_bookings_count_query(post_id, beginDate, endDate):
@@ -117,6 +125,7 @@ def overlapping_bookings_count_query(post_id, beginDate, endDate):
                     (beginDate < '{}' AND endDate > '{}')\
                 )".format(post_id, beginDate, endDate, beginDate, endDate, beginDate, endDate)
 
+
 def overlapping_bookings_query(post_id, beginDate, endDate):
     return "\
                 SELECT *\
@@ -131,12 +140,14 @@ def overlapping_bookings_query(post_id, beginDate, endDate):
                     (beginDate < '{}' AND endDate > '{}')\
                 )".format(post_id, beginDate, endDate, beginDate, endDate, beginDate, endDate)
 
+
 def get_post_query(post_id):
     return "\
                 SELECT * FROM posts WHERE id = '{}'".format(post_id)
 
+
 def get_post_transaction_query(post_id):
-    return"\
+    return "\
                 SELECT room_transaction\
                 FROM posts\
                 WHERE id='{}'".format(post_id)
