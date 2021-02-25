@@ -3,6 +3,7 @@ RUN pip install gunicorn
 RUN pip install Flask
 RUN pip install requests
 RUN pip install psycopg2
+RUN pip install geopy
 RUN apt update -y
 RUN apt install -y postgresql
 

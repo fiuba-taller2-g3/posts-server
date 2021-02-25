@@ -2,6 +2,7 @@ import json
 
 import requests
 import datetime
+import geopy.distance
 from flask import Flask, request, make_response, jsonify
 from db_service import *
 
@@ -22,6 +23,46 @@ def hello():
     use_db(conn, 'SELECT NOW();')
     return response
 
+@app.route('/feedback', methods=['POST'])
+def new_feedback():
+    body = request.json
+    # TODO chequear que existe una booking confirmada para el par post_id, user_id
+    feedback_id, post_id, user_id, date, comment, stars, = use_db(conn, add_feedback_query( body['user_id'],
+                                                                                            body['post_id'],
+                                                                                            body['date'],
+                                                                                            body.get('comment'),
+                                                                                            body.get('stars')
+                                                                                            ))
+    return make_response(
+        jsonify(
+            feedback_id=feedback_id,
+            post_id=post_id,
+            user_id=user_id,
+            date=date.strftime('%Y-%m-%d'),
+            coment=comment,
+            stars = stars
+        )
+    )
+
+@app.route('/feedback')
+def get_feedbacks():
+    user_id = request.args.get('user_id')
+    post_id = request.args.get('post_id')
+    date = request.args.get('date')
+    mandatoryComment = request.args.get('mandatoryComment', False)
+    mandatoryStars = request.args.get('mandatoryStars', False)
+    feedbacks = []
+    print(mandatoryStars, mandatoryComment, mandatoryStars == True, mandatoryComment == True)
+    for feedback_id, post_id, user_id, date, comment, stars in use_db(conn, get_feedback_query( user_id,
+                                                                                                post_id,
+                                                                                                date,
+                                                                                                mandatoryComment == True,
+                                                                                                mandatoryStars == True
+                                                                                                ), many=True):
+        feedbacks.append({  'feedback_id':feedback_id, 'post_id':post_id,
+                            'user_id':user_id, 'date':date.strftime('%Y-%m-%d'),
+                            'comment':comment, 'stars':stars })
+    return make_response(jsonify(feedbacks), 200)
 
 @app.route('/posts', methods=['DELETE'])
 def reset_posts():
@@ -95,13 +136,29 @@ def search_posts():
     maxPrice = request.args.get('maxPrice')
     beginDate = request.args.get('beginDate')
     endDate = request.args.get('endDate')
+    lng = request.args.get('lng')
+    lat = request.args.get('lat')
+    maxDistance = request.args.get('maxDistance')
     posts = use_db(conn, get_posts_query(user_id, type, minPrice, maxPrice), many=True)
     parsed_posts = []
     for post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, installations, is_blocked, location, price, security, services, title, type, user_id, wallet_id, room_transaction, in posts:
+        closeEnough = True
+        if lng and lat:
+            maxDistance = float(maxDistance) if maxDistance else 10.0
+            postCoords = (float(location['lng']), float(location['lat']))
+            searchCoords = (float(lng), float(lat))
+            distance = geopy.distance.geodesic(postCoords, searchCoords).km
+            closeEnough = distance <= maxDistance
         overlap = False
+        availableRoom = True
         if beginDate and endDate:
             overlap, = use_db(conn, overlapping_bookings_count_query(post_id, beginDate, endDate))
-        if not overlap:
+            avBeginDate = datetime.datetime.strptime(availability_dates['start_date'], '%Y-%m-%d')
+            avEndDate = datetime.datetime.strptime(availability_dates['end_date'], '%Y-%m-%d')
+            beginDate = datetime.datetime.strptime(beginDate, '%Y-%m-%d')
+            endDate = datetime.datetime.strptime(endDate, '%Y-%m-%d')
+            availableRoom = avBeginDate <= beginDate <= avEndDate and avBeginDate <= endDate <= avEndDate
+        if not overlap and availableRoom and closeEnough:
             parsed_posts.append({"id": post_id, "user_id": user_id, "price": price, "date": date.strftime('%Y-%m-%d'),
                                  "is_blocked": is_blocked, "type": type, "title": title, "description": description,
                                  "availability_dates": availability_dates, "availability_type": availability_type,

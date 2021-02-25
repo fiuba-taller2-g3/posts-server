@@ -3,6 +3,18 @@ import psycopg2
 import os
 import urllib.parse as urlparse
 import json
+
+CREATE_FEEDBACK_TABLE_CMD = "\
+                CREATE TABLE IF NOT EXISTS feedback (\
+                    id SERIAL PRIMARY KEY,\
+                    post_id INT REFERENCES posts(id),\
+                    user_id INT NOT NULL,\
+                    date DATE NOT NULL,\
+                    comment VARCHAR(400),\
+                    stars INT\
+                );\
+                "
+
 CREATE_POSTS_TABLE_CMD = "\
                 CREATE TABLE IF NOT EXISTS posts (\
                     id SERIAL PRIMARY KEY,\
@@ -19,7 +31,7 @@ CREATE_POSTS_TABLE_CMD = "\
                     installations json NOT NULL,\
                     is_blocked BOOLEAN DEFAULT false,\
                     location json NOT NULL,\
-                    price INT NOT NULL,\
+                    price DOUBLE PRECISION NOT NULL,\
                     security json NOT NULL,\
                     services json NOT NULL,\
                     title VARCHAR(30),\
@@ -53,10 +65,34 @@ DROP_ALL_CMD = "\
                 GRANT ALL ON SCHEMA public TO public;\
                 "
 
-INIT_CMD = CREATE_POSTS_TABLE_CMD + CREATE_BOOKINGS_TABLE_CMD + CREATE_BOOKINGS_TABLE_CMD
+INIT_CMD = CREATE_POSTS_TABLE_CMD + CREATE_BOOKINGS_TABLE_CMD + CREATE_BOOKINGS_TABLE_CMD + CREATE_FEEDBACK_TABLE_CMD
 
 RESET_CMD = DROP_ALL_CMD + INIT_CMD
 
+def add_feedback_query(user_id, post_id, date, comment, stars):
+    query = "\
+                INSERT INTO feedback(user_id, post_id, date, comment, stars)\
+                VALUES ('{}', '{}', '{}', ".format(user_id, post_id, date)
+    query += "'{}', ".format(comment) if comment else "NULL, "
+    query += "'{}'".format(stars) if stars else "NULL"
+    query += ")RETURNING *"
+    return query
+
+def get_feedback_query(user_id, post_id, date, mandatoryComment, mandatoryStars):
+        query = "\
+                    SELECT * FROM feedback\
+                    WHERE id > 0 "
+        if user_id:
+            query += "AND user_id = '{}' ".format(user_id)
+        if post_id:
+            query += "AND post_id = '{}' ".format(post_id)
+        if date:
+            query += "AND date = '{}' ".format(date)
+        if mandatoryStars:
+            query += "AND stars IS NOT NULL "
+        if mandatoryComment:
+            query += "AND comment IS NOT NULL "
+        return query
 
 def get_bookings_query(guest_user_id, user_id, post_id, status, booking_id):
     query = "\
@@ -163,11 +199,11 @@ def get_posts_query(user_id, type, minPrice, maxPrice):
                 WHERE id > 0 "
     if user_id:
         query += "AND user_id = '{}' ".format(user_id)
-    elif type:
+    if type:
         query += "AND type = '{}' ".format(type)
-    elif maxPrice:
+    if maxPrice:
         query += "AND price <= {} ".format(maxPrice)
-    elif minPrice:
+    if minPrice:
         query += "AND price >= {} ".format(minPrice)
     return query
 
