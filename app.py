@@ -27,6 +27,8 @@ def hello():
 def new_feedback():
     body = request.json
     # TODO chequear que existe una booking confirmada para el par post_id, user_id
+    if use_db(conn, count_bookings_query(body['post_id'], body['user_id']))[0] == 0:
+        return make_response({ "error": "No puedes calificar este alojamiento si nunca reservaste ahi" }, 400)
     feedback_id, post_id, user_id, date, comment, stars, = use_db(conn, add_feedback_query( body['user_id'],
                                                                                             body['post_id'],
                                                                                             body['date'],

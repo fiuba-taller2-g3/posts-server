@@ -92,6 +92,14 @@ def get_feedback_query(user_id, post_id, date, mandatoryComment, mandatoryStars)
             query += "AND comment IS NOT NULL "
         return query
 
+def count_bookings_query(post_id, guest_user_id):
+    return "\
+        SELECT COUNT(*) FROM bookings \
+        WHERE guest_user_id='{}' \
+        AND post_id='{}' \
+        AND status='accepted'".format(guest_user_id, post_id)
+
+
 def get_bookings_query(guest_user_id, user_id, post_id, status, booking_id):
     query = "\
                 SELECT * FROM bookings \
