@@ -153,7 +153,7 @@ def search_posts():
     for post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, is_blocked, location, price, services, title, type, user_id, wallet_id, room_transaction, in posts:
         closeEnough = True
         if lng and lat:
-            maxDistance = float(maxDistance) if maxDistance else 10.0
+            maxDistance = float(maxDistance) if maxDistance else 100.0
             postCoords = (float(location['lng']), float(location['lat']))
             searchCoords = (float(lng), float(lat))
             distance = geopy.distance.geodesic(postCoords, searchCoords).km
