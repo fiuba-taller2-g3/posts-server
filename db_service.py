@@ -131,7 +131,7 @@ def add_post_query(body):
                                     body["description"], body["guests"],
                                     json.dumps(body["images"]),
                                     body["is_blocked"], json.dumps(body["location"]), body["price"],
-                                    json.dumps(body["services"]), body["title"], body["type"], body["user_id"],
+                                    json.dumps(body["services"]), body["title"], body["type"].lower(), body["user_id"],
                                     body["wallet_id"], body["room_transaction"])
 
 

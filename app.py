@@ -26,7 +26,6 @@ def hello():
 @app.route('/feedback', methods=['POST'])
 def new_feedback():
     body = request.json
-    # TODO chequear que existe una booking confirmada para el par post_id, user_id
     if use_db(conn, count_bookings_query(body['post_id'], body['user_id']))[0] == 0:
         return make_response({ "error": "No puedes calificar este alojamiento si nunca reservaste ahi" }, 400)
     feedback_id, post_id, user_id, date, comment, stars, = use_db(conn, add_feedback_query( body['user_id'],
@@ -54,7 +53,6 @@ def get_feedbacks():
     mandatoryComment = request.args.get('mandatoryComment', False)
     mandatoryStars = request.args.get('mandatoryStars', False)
     feedbacks = []
-    print(mandatoryStars, mandatoryComment, mandatoryStars == True, mandatoryComment == True)
     for feedback_id, post_id, user_id, date, comment, stars in use_db(conn, get_feedback_query( user_id,
                                                                                                 post_id,
                                                                                                 date,
@@ -141,10 +139,11 @@ def delete_post(post_id):
 def search_posts():
     user_id = request.args.get('user_id')
     type = request.args.get('type')
+    if type: type = type.lower()
     minPrice = request.args.get('minPrice')
     maxPrice = request.args.get('maxPrice')
-    beginDate = request.args.get('beginDate')
-    endDate = request.args.get('endDate')
+    bodyBeginDate = request.args.get('beginDate')
+    bodyEndDate = request.args.get('endDate')
     lng = request.args.get('lng')
     lat = request.args.get('lat')
     maxDistance = request.args.get('maxDistance')
@@ -160,12 +159,12 @@ def search_posts():
             closeEnough = distance <= maxDistance
         overlap = False
         availableRoom = True
-        if beginDate and endDate:
-            overlap, = use_db(conn, overlapping_bookings_count_query(post_id, beginDate, endDate))
+        if bodyBeginDate and bodyEndDate:
+            overlap, = use_db(conn, overlapping_bookings_count_query(post_id, bodyBeginDate, bodyEndDate))
             avBeginDate = datetime.datetime.strptime(availability_dates['start_date'], '%Y-%m-%d')
             avEndDate = datetime.datetime.strptime(availability_dates['end_date'], '%Y-%m-%d')
-            beginDate = datetime.datetime.strptime(beginDate, '%Y-%m-%d')
-            endDate = datetime.datetime.strptime(endDate, '%Y-%m-%d')
+            beginDate = datetime.datetime.strptime(bodyBeginDate, '%Y-%m-%d')
+            endDate = datetime.datetime.strptime(bodyEndDate, '%Y-%m-%d')
             availableRoom = avBeginDate <= beginDate <= avEndDate and avBeginDate <= endDate <= avEndDate
         if not overlap and availableRoom and closeEnough:
             parsed_posts.append({"id": post_id, "user_id": user_id, "price": price, "date": date.strftime('%Y-%m-%d'),
