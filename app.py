@@ -109,6 +109,12 @@ def visualize_post(post_id):
 def edit_post(post_id):
     body = request.json
     body.pop("id", None)
+    if body.get('price'):
+        roomTransaction = use_db(conn, get_post_transaction_query(post_id))[0]
+        owner_w_id = use_db(conn, get_post_owner_wallet_id_query(post_id))[0]
+        response = requests.patch(payments_base_url + 'room', json={ 'wallet_id': owner_w_id, 'room_transaction': roomTransaction, 'price': body.get('price') })
+        if response.status_code != 200:
+            return make_response(response.content, 500)
     post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, is_blocked, location, price, services, title, type, user_id, wallet_id, room_transaction, = use_db(
         conn, edit_post_cmd(post_id, **body))
     return make_response(
@@ -123,6 +129,11 @@ def edit_post(post_id):
 
 @app.route('/posts/<post_id>', methods=['DELETE'])
 def delete_post(post_id):
+    roomTransaction = use_db(conn, get_post_transaction_query(post_id))[0]
+    owner_w_id = use_db(conn, get_post_owner_wallet_id_query(post_id))[0]
+    response = requests.delete(payments_base_url + 'room', json={ 'room_transaction': roomTransaction, 'wallet_id': owner_w_id })
+    if response.status_code != 200:
+        return make_response(response.content, 500)
     post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, is_blocked, location, price, services, title, type, user_id, wallet_id, room_transaction, = use_db(
         conn, delete_post_query(post_id))
     return make_response(

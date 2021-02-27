@@ -53,7 +53,7 @@ CREATE_BOOKINGS_TABLE_CMD = "\
                     resTransaction VARCHAR(250),\
                     beginDate DATE,\
                     endDate DATE,\
-                    PRIMARY KEY (guest_wallet_id, post_id, beginDate, endDate)
+                    PRIMARY KEY (guest_wallet_id, post_id, beginDate, endDate)\
                 );\
                 "
 
@@ -193,6 +193,12 @@ def get_post_query(post_id):
 def get_post_transaction_query(post_id):
     return "\
                 SELECT room_transaction\
+                FROM posts\
+                WHERE id='{}'".format(post_id)
+
+def get_post_owner_wallet_id_query(post_id):
+    return "\
+                SELECT wallet_id\
                 FROM posts\
                 WHERE id='{}'".format(post_id)
 
