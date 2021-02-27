@@ -147,7 +147,8 @@ def search_posts():
     lng = request.args.get('lng')
     lat = request.args.get('lat')
     maxDistance = request.args.get('maxDistance')
-    posts = use_db(conn, get_posts_query(user_id, type, minPrice, maxPrice), many=True)
+    hide_user_id = request.args.get('hide_user_id')
+    posts = use_db(conn, get_posts_query(user_id, type, minPrice, maxPrice, hide_user_id), many=True)
     parsed_posts = []
     for post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, is_blocked, location, price, services, title, type, user_id, wallet_id, room_transaction, in posts:
         closeEnough = True
@@ -198,6 +199,7 @@ def get_bookings():
 @app.route('/bookings', methods=['POST'])
 def new_booking():
     body = request.json
+    # TODO Validar availavility
     roomTransaction = use_db(conn, get_post_transaction_query(body['post_id']))[0]
     beginDate = datetime.datetime.strptime(body['begin_date'], '%Y-%m-%d')
     endDate = datetime.datetime.strptime(body['end_date'], '%Y-%m-%d')
@@ -210,14 +212,14 @@ def new_booking():
                                                                   "end_month": endDate.month,
                                                                   "end_year": endDate.year})
     if response.status_code == 200:
+        # TODO Notificar al host que intentaron reservar
         b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, = use_db(conn,
                                                                                                  add_booking_query(
                                                                                                      body['user_id'],
                                                                                                      body['wallet_id'],
                                                                                                      body['post_id'],
                                                                                                      'pending',
-                                                                                                     response.json()[
-                                                                                                         'intentTransaction'],
+                                                                                                     response.json()['intentTransaction'],
                                                                                                      body['begin_date'],
                                                                                                      body['end_date']
                                                                                                      ))
@@ -225,7 +227,7 @@ def new_booking():
             jsonify(post_id=p_id, guest_user_id=gu_id, guest_wallet_id=gw_id, booking_id=b_id,
                     begin_date=body['begin_date'],
                     end_date=body['end_date'], status=status, transaction=tx), 201)
-    return make_response(response.content, response.status_code)
+    return make_response(response.content, 500)
 
 
 @app.route('/acceptance', methods=['POST'])
@@ -250,12 +252,10 @@ def accept_booking():
                                                                                                      body['user_id'],
                                                                                                      body['wallet_id'],
                                                                                                      'accepted',
-                                                                                                     response.json()[
-                                                                                                         'acceptTransaction'],
+                                                                                                     response.json()['acceptTransaction'],
                                                                                                      body['end_date'],
                                                                                                      body['begin_date'],
-                                                                                                     body[
-                                                                                                         'guest_wallet_id'],
+                                                                                                     body['guest_wallet_id'],
                                                                                                      body['post_id']
                                                                                                      ))
         acceptResponse = make_response(
@@ -291,7 +291,7 @@ def accept_booking():
             else:
                 print("Fallo el rechazo", response.content)
         return acceptResponse
-    return make_response(response.content, response.status_code)
+    return make_response(response.content, 500)
 
 
 if __name__ == '__main__':

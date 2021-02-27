@@ -49,10 +49,11 @@ CREATE_BOOKINGS_TABLE_CMD = "\
                     guest_wallet_id INT NOT NULL,\
                     post_id INT REFERENCES posts(id),\
                     status VARCHAR(50),\
-                    transaction VARCHAR(250) PRIMARY KEY,\
+                    transaction VARCHAR(250),\
                     resTransaction VARCHAR(250),\
                     beginDate DATE,\
-                    endDate DATE\
+                    endDate DATE,\
+                    PRIMARY KEY (guest_wallet_id, post_id, beginDate, endDate)
                 );\
                 "
 
@@ -208,12 +209,14 @@ def edit_post_cmd(post_id, **fields):
     return query
 
 
-def get_posts_query(user_id, type, minPrice, maxPrice):
+def get_posts_query(user_id, type, minPrice, maxPrice, hide_user_id):
     query = "\
                 SELECT * FROM posts\
                 WHERE id > 0 "
     if user_id:
         query += "AND user_id = '{}' ".format(user_id)
+    if hide_user_id:
+        query += "AND user_id != '{}' ".format(hide_user_id)
     if type:
         query += "AND type = '{}' ".format(type)
     if maxPrice:
