@@ -4,6 +4,7 @@ RUN pip install Flask
 RUN pip install requests
 RUN pip install psycopg2
 RUN pip install geopy
+RUN pip install pyfcm
 RUN apt update -y
 RUN apt install -y postgresql
 

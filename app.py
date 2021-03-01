@@ -1,10 +1,11 @@
-import json
-
 import requests
 import datetime
 import geopy.distance
 from flask import Flask, request, make_response, jsonify
 from db_service import *
+
+from fcm_service import send_notification
+from tokens_service import save_token
 
 app = Flask(__name__)
 
@@ -23,17 +24,18 @@ def hello():
     use_db(conn, 'SELECT NOW();')
     return response
 
+
 @app.route('/feedback', methods=['POST'])
 def new_feedback():
     body = request.json
     if use_db(conn, count_bookings_query(body['post_id'], body['user_id']))[0] == 0:
-        return make_response({ "error": "No puedes calificar este alojamiento si nunca reservaste ahi" }, 400)
-    feedback_id, post_id, user_id, date, comment, stars, = use_db(conn, add_feedback_query( body['user_id'],
-                                                                                            body['post_id'],
-                                                                                            body['date'],
-                                                                                            body.get('comment'),
-                                                                                            body.get('stars')
-                                                                                            ))
+        return make_response({"error": "No puedes calificar este alojamiento si nunca reservaste ahi"}, 400)
+    feedback_id, post_id, user_id, date, comment, stars, = use_db(conn, add_feedback_query(body['user_id'],
+                                                                                           body['post_id'],
+                                                                                           body['date'],
+                                                                                           body.get('comment'),
+                                                                                           body.get('stars')
+                                                                                           ))
     return make_response(
         jsonify(
             feedback_id=feedback_id,
@@ -41,9 +43,10 @@ def new_feedback():
             user_id=user_id,
             date=date.strftime('%Y-%m-%d'),
             coment=comment,
-            stars = stars
+            stars=stars
         )
     )
+
 
 @app.route('/feedback')
 def get_feedbacks():
@@ -53,16 +56,17 @@ def get_feedbacks():
     mandatoryComment = request.args.get('mandatoryComment', False)
     mandatoryStars = request.args.get('mandatoryStars', False)
     feedbacks = []
-    for feedback_id, post_id, user_id, date, comment, stars in use_db(conn, get_feedback_query( user_id,
-                                                                                                post_id,
-                                                                                                date,
-                                                                                                mandatoryComment == True,
-                                                                                                mandatoryStars == True
-                                                                                                ), many=True):
-        feedbacks.append({  'feedback_id':feedback_id, 'post_id':post_id,
-                            'user_id':user_id, 'date':date.strftime('%Y-%m-%d'),
-                            'comment':comment, 'stars':stars })
+    for feedback_id, post_id, user_id, date, comment, stars in use_db(conn, get_feedback_query(user_id,
+                                                                                               post_id,
+                                                                                               date,
+                                                                                               mandatoryComment == True,
+                                                                                               mandatoryStars == True
+                                                                                               ), many=True):
+        feedbacks.append({'feedback_id': feedback_id, 'post_id': post_id,
+                          'user_id': user_id, 'date': date.strftime('%Y-%m-%d'),
+                          'comment': comment, 'stars': stars})
     return make_response(jsonify(feedbacks), 200)
+
 
 @app.route('/posts', methods=['DELETE'])
 def reset_posts():
@@ -112,7 +116,9 @@ def edit_post(post_id):
     if body.get('price'):
         roomTransaction = use_db(conn, get_post_transaction_query(post_id))[0]
         owner_w_id = use_db(conn, get_post_owner_wallet_id_query(post_id))[0]
-        response = requests.patch(payments_base_url + 'room', json={ 'wallet_id': owner_w_id, 'room_transaction': roomTransaction, 'price': body.get('price') })
+        response = requests.patch(payments_base_url + 'room',
+                                  json={'wallet_id': owner_w_id, 'room_transaction': roomTransaction,
+                                        'price': body.get('price')})
         if response.status_code != 200:
             return make_response(response.content, 500)
     post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, is_blocked, location, price, services, title, type, user_id, wallet_id, room_transaction, = use_db(
@@ -131,7 +137,8 @@ def edit_post(post_id):
 def delete_post(post_id):
     roomTransaction = use_db(conn, get_post_transaction_query(post_id))[0]
     owner_w_id = use_db(conn, get_post_owner_wallet_id_query(post_id))[0]
-    response = requests.delete(payments_base_url + 'room', json={ 'room_transaction': roomTransaction, 'wallet_id': owner_w_id })
+    response = requests.delete(payments_base_url + 'room',
+                               json={'room_transaction': roomTransaction, 'wallet_id': owner_w_id})
     if response.status_code != 200:
         return make_response(response.content, 500)
     post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, is_blocked, location, price, services, title, type, user_id, wallet_id, room_transaction, = use_db(
@@ -224,16 +231,18 @@ def new_booking():
                                                                   "end_year": endDate.year})
     if response.status_code == 200:
         # TODO Notificar al host que intentaron reservar
+        send_notification(body['user_id'], "Intentaron reservar tu alojamiento", "Desde el " + str(beginDate) + " hasta el " + str(endDate))
         b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, = use_db(conn,
                                                                                                  add_booking_query(
                                                                                                      body['user_id'],
                                                                                                      body['wallet_id'],
                                                                                                      body['post_id'],
                                                                                                      'pending',
-                                                                                                     response.json()['intentTransaction'],
+                                                                                                     response.json()[
+                                                                                                         'intentTransaction'],
                                                                                                      body['begin_date'],
                                                                                                      body['end_date']
-                                                                                                     ))
+                                                                                                 ))
         return make_response(
             jsonify(post_id=p_id, guest_user_id=gu_id, guest_wallet_id=gw_id, booking_id=b_id,
                     begin_date=body['begin_date'],
@@ -258,17 +267,20 @@ def accept_booking():
                                                                      "end_year": endDate.year})
     if response.status_code == 200:
         # TODO Notificar al guest que se acepto la reserva
+        send_notification(body['user_id'], "Reservación confirmada", "¡Que disfrutes tu alojamiento!")
         b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, = use_db(conn,
                                                                                                  respond_booking_query(
                                                                                                      body['user_id'],
                                                                                                      body['wallet_id'],
                                                                                                      'accepted',
-                                                                                                     response.json()['acceptTransaction'],
+                                                                                                     response.json()[
+                                                                                                         'acceptTransaction'],
                                                                                                      body['end_date'],
                                                                                                      body['begin_date'],
-                                                                                                     body['guest_wallet_id'],
+                                                                                                     body[
+                                                                                                         'guest_wallet_id'],
                                                                                                      body['post_id']
-                                                                                                     ))
+                                                                                                 ))
         acceptResponse = make_response(
             jsonify(post_id=p_id, guest_user_id=gu_id, guest_wallet_id=gw_id, booking_id=b_id,
                     begin_date=body['begin_date'],
@@ -289,6 +301,7 @@ def accept_booking():
                                                                              "end_year": endDate.year})
             if response.status_code == 200:
                 # TODO Notificar al guest que se rechazo la reserva
+                send_notification(body['user_id'], "Reservación rechazada", "Volvé a intentarlo")
                 resValues = use_db(conn, respond_booking_query(
                     body['user_id'],
                     body['wallet_id'],
@@ -303,6 +316,24 @@ def accept_booking():
                 print("Fallo el rechazo", response.content)
         return acceptResponse
     return make_response(response.content, 500)
+
+
+@app.route('/notifications', methods=['POST'])
+def notifications():
+    result = send_notification("1", "default title", "default message")
+    print(result)
+
+    return make_response(result, 200)
+
+
+@app.route('/tokens', methods=['POST'])
+def tokens():
+    save_token(request.json['user_id'], request.json['token_id'])
+    print("body", request.json)
+    print("user id:", request.json['user_id'])
+    print("token id:", request.json['token_id'])
+
+    return make_response("{\"msg\" : \"ok\"}", 200)
 
 
 if __name__ == '__main__':

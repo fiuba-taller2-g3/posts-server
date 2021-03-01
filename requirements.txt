@@ -19,3 +19,4 @@ urllib3==1.25.3
 Werkzeug==0.15.5
 dnspython==1.16.0
 gunicorn==19.9.0
+pyfcm==0.2.4
