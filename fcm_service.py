@@ -5,9 +5,7 @@ from tokens_service import tokens
 
 def send_notification(user_id, notification_title, notification_body):
     push_service = FCMNotification(
-        api_key="AAAAlBhRVjc:APA91bHgKK5gKNTEw-83ZQ9RgA17tT1ZAohbHyI4ZEzSrBJ1kHdJ4NsvvtsRZa-nDjuYklrqyUuEu3lS3orNrep1xwuX4AgWFMBkinUr5AklaRzYJPSQhOMFSiBPBq64CMFhR7NTCt-N")
-
-    # registration_id = "cjDylnSMQvKOX0qa8-JYUA:APA91bHKXAMahYiIHdfNjEtBidPClrfv5fGtmQAue_n-HwYP3WWXYkFKQAjuNP0EQ6AdHDr_eKsYBQAOhdrSvgG_goUm1ttZRDUisHlei6LlzqALSJomg9QFvJnjJOSM90fdKGiKC5MO"
+        api_key="AAAAxiaBS5E:APA91bGxW95dHwwRhhq5gEET2_M_zZ4QrzfCWEkezL5TTEXh8_m-9132m6yG6Y_5RrKcNrZlPrs5RP8JuD3ax-vpf84FCuhckNFnqIe0pzhZozodXmqfi6g04v7s3WYa0HR4jydj7YCg")
 
     try:
         registration_id = tokens.get(user_id)

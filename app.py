@@ -317,10 +317,11 @@ def accept_booking():
         return acceptResponse
     return make_response(response.content, 500)
 
-
+# endpoint para pruebas internas
 @app.route('/notifications', methods=['POST'])
 def notifications():
-    result = send_notification("1", "default title", "default message")
+    user_id = request.args.get('user_id')
+    result = send_notification(str(user_id), "default title", "default message")
     print(result)
 
     return make_response(result, 200)
@@ -329,11 +330,7 @@ def notifications():
 @app.route('/tokens', methods=['POST'])
 def tokens():
     save_token(request.json['user_id'], request.json['token_id'])
-    print("body", request.json)
-    print("user id:", request.json['user_id'])
-    print("token id:", request.json['token_id'])
-
-    return make_response("{\"msg\" : \"ok\"}", 200)
+    return make_response("{\"msg\" : \"ok\"}", 201)
 
 
 if __name__ == '__main__':
