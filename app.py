@@ -339,7 +339,7 @@ def tokens():
 def posts_for_metrics():
     from_date = request.args.get('from_date')
     to_date = request.args.get('to_date')
-    res, = use_db(conn, count_posts_between_dates(from_date, to_date))
+    res = use_db(conn, count_posts_between_dates(from_date, to_date))
     if res is not []:
         print(res[0])
         return make_response(res, 200)
