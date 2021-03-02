@@ -345,7 +345,7 @@ def posts_for_metrics():
     if res is not []:
         print(res[0])
         sys.stdout.flush()
-        res_transformed = map(lambda t: (str(t[0]), str(t[1])), res)
+        res_transformed = map(lambda t: (t[0].strftime('%Y/%m/%d'), str(t[1])), res)
         return make_response(json.dumps(dict(res_transformed)), 200)
     else:
         print("no hay publicaciones")
