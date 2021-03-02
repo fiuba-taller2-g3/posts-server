@@ -345,10 +345,11 @@ def posts_for_metrics():
     if res is not []:
         print(res[0])
         sys.stdout.flush()
+        return make_response(json.dumps(dict(res)), 200)
     else:
         print("no hay publicaciones")
         sys.stdout.flush()
-    return make_response("{\"msg\" : \"ok\"}", 200)
+        return make_response("{\"msg\" : \"empty\"}", 204)
 
 
 if __name__ == '__main__':
