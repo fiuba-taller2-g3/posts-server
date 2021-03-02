@@ -68,6 +68,7 @@ INIT_CMD = CREATE_POSTS_TABLE_CMD + CREATE_BOOKINGS_TABLE_CMD + CREATE_BOOKINGS_
 
 RESET_CMD = DROP_ALL_CMD + INIT_CMD
 
+
 def add_feedback_query(user_id, post_id, date, comment, stars):
     query = "\
                 INSERT INTO feedback(user_id, post_id, date, comment, stars)\
@@ -77,21 +78,23 @@ def add_feedback_query(user_id, post_id, date, comment, stars):
     query += ")RETURNING *"
     return query
 
+
 def get_feedback_query(user_id, post_id, date, mandatoryComment, mandatoryStars):
-        query = "\
+    query = "\
                     SELECT * FROM feedback\
                     WHERE id > 0 "
-        if user_id:
-            query += "AND user_id = '{}' ".format(user_id)
-        if post_id:
-            query += "AND post_id = '{}' ".format(post_id)
-        if date:
-            query += "AND date = '{}' ".format(date)
-        if mandatoryStars:
-            query += "AND stars IS NOT NULL "
-        if mandatoryComment:
-            query += "AND comment IS NOT NULL "
-        return query
+    if user_id:
+        query += "AND user_id = '{}' ".format(user_id)
+    if post_id:
+        query += "AND post_id = '{}' ".format(post_id)
+    if date:
+        query += "AND date = '{}' ".format(date)
+    if mandatoryStars:
+        query += "AND stars IS NOT NULL "
+    if mandatoryComment:
+        query += "AND comment IS NOT NULL "
+    return query
+
 
 def count_bookings_query(post_id, guest_user_id):
     return "\
@@ -196,6 +199,7 @@ def get_post_transaction_query(post_id):
                 FROM posts\
                 WHERE id='{}'".format(post_id)
 
+
 def get_post_owner_wallet_id_query(post_id):
     return "\
                 SELECT wallet_id\
@@ -237,6 +241,14 @@ def delete_post_query(post_id):
                 DELETE FROM posts\
                 WHERE id = '{}'\
                 RETURNING *".format(post_id)
+
+
+def count_posts_between_dates(from_date, to_date):
+    return "\
+                SELECT date, COUNT(*)\
+                FROM posts\
+                WHERE (date >= '{}' AND date <= '{}')\
+                GROUP BY date".format(from_date, to_date)
 
 
 def connect():

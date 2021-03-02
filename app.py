@@ -231,7 +231,8 @@ def new_booking():
                                                                   "end_year": endDate.year})
     if response.status_code == 200:
         # TODO Notificar al host que intentaron reservar
-        send_notification(body['user_id'], "Intentaron reservar tu alojamiento", "Desde el " + str(beginDate) + " hasta el " + str(endDate))
+        send_notification(body['user_id'], "Intentaron reservar tu alojamiento",
+                          "Desde el " + str(beginDate) + " hasta el " + str(endDate))
         b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, = use_db(conn,
                                                                                                  add_booking_query(
                                                                                                      body['user_id'],
@@ -317,6 +318,7 @@ def accept_booking():
         return acceptResponse
     return make_response(response.content, 500)
 
+
 # endpoint para pruebas internas
 @app.route('/notifications', methods=['POST'])
 def notifications():
@@ -331,6 +333,19 @@ def notifications():
 def tokens():
     save_token(request.json['user_id'], request.json['token_id'])
     return make_response("{\"msg\" : \"ok\"}", 201)
+
+
+@app.route('/posts/metrics')
+def posts_for_metrics():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    res, = use_db(conn, count_posts_between_dates(from_date, to_date))
+    if res is not []:
+        print(res[0])
+        return make_response(res, 200)
+    else:
+        print("no hay publicaciones")
+    return make_response("{\"msg\" : \"ok\"}", 200)
 
 
 if __name__ == '__main__':
