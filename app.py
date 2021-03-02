@@ -1,6 +1,8 @@
 import requests
 import datetime
 import geopy.distance
+import sys
+
 from flask import Flask, request, make_response, jsonify
 from db_service import *
 
@@ -342,9 +344,10 @@ def posts_for_metrics():
     res = use_db(conn, count_posts_between_dates(from_date, to_date))
     if res is not []:
         print(res[0])
-        return make_response("ok", 200)
+        sys.stdout.flush()
     else:
         print("no hay publicaciones")
+        sys.stdout.flush()
     return make_response("{\"msg\" : \"ok\"}", 200)
 
 
