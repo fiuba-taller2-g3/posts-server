@@ -342,7 +342,7 @@ def posts_for_metrics():
     res = use_db(conn, count_posts_between_dates(from_date, to_date))
     if res is not []:
         print(res[0])
-        return make_response(res, 200)
+        return make_response("ok", 200)
     else:
         print("no hay publicaciones")
     return make_response("{\"msg\" : \"ok\"}", 200)
