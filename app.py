@@ -7,7 +7,7 @@ from flask import Flask, request, make_response, jsonify
 from db_service import *
 
 from fcm_service import send_notification
-from tokens_service import save_token
+from tokens_service import save_token, reset_tokens, get_tokens
 
 app = Flask(__name__)
 
@@ -364,6 +364,17 @@ def metrics_posts():
 #         print("no hay bookings")
 #         sys.stdout.flush()
 #         return make_response("{\"msg\" : \"empty\"}", 204)
+
+
+@app.route('/tokens', methods=['DELETE'])
+def delete_tokens():
+    reset_tokens()
+    return make_response("{\"msg\" : \"ok\"}", 200)
+
+
+@app.route('/tokens', methods=['DELETE'])
+def tokens():
+    return make_response(json.dumps(get_tokens()), 200)
 
 
 if __name__ == '__main__':
