@@ -344,8 +344,7 @@ def metrics_posts():
     to_date = request.args.get('to_date')
     res = use_db(conn, count_posts_between_dates(from_date, to_date), many=True)
     if res is not []:
-        res_transformed = map(lambda t: (t[0].strftime('%d-%m-%Y'), str(t[1])), res)
-        make_response(jsonify())
+        res_transformed = map(lambda t: (('date', (t[0].strftime('%d-%m-%Y'))), ('value', str(t[1]))), res)
         return make_response(json.dumps(dict(res_transformed)), 200)
     else:
         print("no hay publicaciones")
