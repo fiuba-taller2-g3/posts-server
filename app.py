@@ -233,8 +233,10 @@ def new_booking():
                                                                   "end_year": endDate.year})
     if response.status_code == 200:
         host_id = use_db(conn, get_post_query(body['post_id']))
+        print("host_id:", host_id)
+        sys.stdout.flush()
         # TODO Notificar al host que intentaron reservar
-        send_notification(host_id, "Intentaron reservar tu alojamiento",
+        send_notification(host_id[1], "Intentaron reservar tu alojamiento",
                           "Desde el " + str(beginDate) + " hasta el " + str(endDate) + "|host")
         b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, = use_db(conn,
                                                                                                  add_booking_query(
