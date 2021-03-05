@@ -251,7 +251,7 @@ def delete_post_query(post_id):
 
 def count_posts_between_dates(from_date, to_date):
     return "\
-                SELECT date, COUNT(*)\
+                SELECT date as date_key, COUNT(*) as value\
                 FROM posts\
                 WHERE (date >= '{}' AND date <= '{}')\
                 GROUP BY date".format(from_date, to_date)
