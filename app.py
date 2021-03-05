@@ -333,7 +333,7 @@ def notifications():
 
 
 @app.route('/tokens', methods=['POST'])
-def tokens():
+def save_token():
     save_token(request.json['user_id'], request.json['token_id'])
     return make_response("{\"msg\" : \"ok\"}", 201)
 
@@ -372,8 +372,8 @@ def delete_tokens():
     return make_response("{\"msg\" : \"ok\"}", 200)
 
 
-@app.route('/tokens', methods=['DELETE'])
-def tokens():
+@app.route('/tokens')
+def get_tokens():
     return make_response(json.dumps(get_tokens()), 200)
 
 
