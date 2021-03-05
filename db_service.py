@@ -139,11 +139,12 @@ def add_post_query(body):
                                     body["wallet_id"], body["room_transaction"])
 
 
-def add_booking_query(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate):
+def add_booking_query(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate, creation_date):
     return "\
-                INSERT INTO bookings(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate)\
-                VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}')\
-                RETURNING *".format(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate)
+                INSERT INTO bookings(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate, creation_date)\
+                VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')\
+                RETURNING *".format(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate,
+                                    creation_date)
 
 
 def respond_booking_query(user_id, wallet_id, status, resTransaction, endDate, beginDate, guest_wallet_id, post_id):
@@ -191,6 +192,11 @@ def overlapping_bookings_query(post_id, beginDate, endDate):
 def get_post_query(post_id):
     return "\
                 SELECT * FROM posts WHERE id = '{}'".format(post_id)
+
+
+def get_user_id_of_post_query(post_id):
+    return "\
+                SELECT user_id FROM posts WHERE id = '{}'".format(post_id)
 
 
 def get_post_transaction_query(post_id):
@@ -249,6 +255,14 @@ def count_posts_between_dates(from_date, to_date):
                 FROM posts\
                 WHERE (date >= '{}' AND date <= '{}')\
                 GROUP BY date".format(from_date, to_date)
+
+
+def count_bookings_between_dates(from_date, to_date):
+    return "\
+                SELECT creation_date, COUNT(*)\
+                FROM bookings\
+                WHERE (creation_date >= '{}' AND creation_date <= '{}')\
+                GROUP BY creation_date".format(from_date, to_date)
 
 
 def connect():

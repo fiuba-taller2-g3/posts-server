@@ -232,9 +232,10 @@ def new_booking():
                                                                   "end_month": endDate.month,
                                                                   "end_year": endDate.year})
     if response.status_code == 200:
+        host_id = use_db(conn, get_post_query(body['post_id']))
         # TODO Notificar al host que intentaron reservar
-        send_notification(body['user_id'], "Intentaron reservar tu alojamiento",
-                          "Desde el " + str(beginDate) + " hasta el " + str(endDate))
+        send_notification(host_id, "Intentaron reservar tu alojamiento",
+                          "Desde el " + str(beginDate) + " hasta el " + str(endDate) + "|host")
         b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, = use_db(conn,
                                                                                                  add_booking_query(
                                                                                                      body['user_id'],
@@ -270,7 +271,7 @@ def accept_booking():
                                                                      "end_year": endDate.year})
     if response.status_code == 200:
         # TODO Notificar al guest que se acepto la reserva
-        send_notification(body['user_id'], "Reservación confirmada", "¡Que disfrutes tu alojamiento!")
+        send_notification(body['user_id'], "Reservación confirmada", "¡Que disfrutes tu alojamiento!" + "|guest")
         b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, = use_db(conn,
                                                                                                  respond_booking_query(
                                                                                                      body['user_id'],
@@ -304,7 +305,7 @@ def accept_booking():
                                                                              "end_year": endDate.year})
             if response.status_code == 200:
                 # TODO Notificar al guest que se rechazo la reserva
-                send_notification(body['user_id'], "Reservación rechazada", "Volvé a intentarlo")
+                send_notification(body['user_id'], "Reservación rechazada", "Volvé a intentarlo" + "|guest")
                 resValues = use_db(conn, respond_booking_query(
                     body['user_id'],
                     body['wallet_id'],
@@ -338,7 +339,7 @@ def tokens():
 
 
 @app.route('/posts/metrics')
-def posts_for_metrics():
+def metrics_posts():
     from_date = request.args.get('from_date')
     to_date = request.args.get('to_date')
     res = use_db(conn, count_posts_between_dates(from_date, to_date), many=True)
@@ -349,6 +350,20 @@ def posts_for_metrics():
         print("no hay publicaciones")
         sys.stdout.flush()
         return make_response("{\"msg\" : \"empty\"}", 204)
+
+
+# @app.route('/bookings/metrics')
+# def metrics_bookings():
+#     from_date = request.args.get('from_date')
+#     to_date = request.args.get('to_date')
+#     res = use_db(conn, count_posts_between_dates(from_date, to_date), many=True)
+#     if res is not []:
+#         res_transformed = map(lambda t: (t[0].strftime('%d-%m-%Y'), str(t[1])), res)
+#         return make_response(json.dumps(dict(res_transformed)), 200)
+#     else:
+#         print("no hay bookings")
+#         sys.stdout.flush()
+#         return make_response("{\"msg\" : \"empty\"}", 204)
 
 
 if __name__ == '__main__':
