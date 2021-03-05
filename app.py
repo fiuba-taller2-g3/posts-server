@@ -345,7 +345,7 @@ def metrics_posts():
     res = use_db(conn, count_posts_between_dates(from_date, to_date), many=True)
     if res is not []:
         # res_transformed = map(lambda t: (t[0].strftime('%d-%m-%Y'), str(t[1])), res)
-        return make_response(json.dumps(json.dumps([{"name": res[0].strftime('%d-%m-%Y'), "value": res[1]} for row in res])), 200)
+        return make_response(json.dumps([{"name": row[0].strftime('%d-%m-%Y'), "value": row[1]} for row in res]), 200)
     else:
         print("no hay publicaciones")
         sys.stdout.flush()
