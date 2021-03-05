@@ -333,7 +333,7 @@ def notifications():
 
 
 @app.route('/tokens', methods=['POST'])
-def save_token():
+def save_tokens():
     save_token(request.json['user_id'], request.json['token_id'])
     return make_response("{\"msg\" : \"ok\"}", 201)
 
@@ -345,6 +345,7 @@ def metrics_posts():
     res = use_db(conn, count_posts_between_dates(from_date, to_date), many=True)
     if res is not []:
         res_transformed = map(lambda t: (t[0].strftime('%d-%m-%Y'), str(t[1])), res)
+        make_response(jsonify())
         return make_response(json.dumps(dict(res_transformed)), 200)
     else:
         print("no hay publicaciones")
@@ -373,7 +374,7 @@ def delete_tokens():
 
 
 @app.route('/tokens')
-def get_tokens():
+def tokens():
     return make_response(json.dumps(get_tokens()), 200)
 
 
