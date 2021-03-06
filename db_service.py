@@ -139,11 +139,11 @@ def add_post_query(body):
                                     body["wallet_id"], body["room_transaction"])
 
 
-def add_booking_query(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate):
+def add_booking_query(user_id, wallet_id, guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate):
     return "\
-                INSERT INTO bookings(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate)\
-                VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')\
-                RETURNING *".format(guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate)
+                INSERT INTO bookings(user_id, wallet_id, guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate)\
+                VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')\
+                RETURNING *".format(user_id, wallet_id, guest_user_id, guest_wallet_id, post_id, status, transaction, beginDate, endDate)
 
 
 def respond_booking_query(user_id, wallet_id, status, resTransaction, endDate, beginDate, guest_wallet_id, post_id):

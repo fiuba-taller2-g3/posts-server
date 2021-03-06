@@ -3,6 +3,7 @@ import datetime
 import geopy.distance
 import sys
 
+from math import floor
 from flask import Flask, request, make_response, jsonify
 from db_service import *
 
@@ -154,20 +155,7 @@ def delete_post(post_id):
                 location=location, services=services,
                 wallet_id=wallet_id, room_transaction=room_transaction), 200)
 
-
-@app.route('/posts')
-def search_posts():
-    user_id = request.args.get('user_id')
-    type = request.args.get('type')
-    if type: type = type.lower()
-    minPrice = request.args.get('minPrice')
-    maxPrice = request.args.get('maxPrice')
-    bodyBeginDate = request.args.get('beginDate')
-    bodyEndDate = request.args.get('endDate')
-    lng = request.args.get('lng')
-    lat = request.args.get('lat')
-    maxDistance = request.args.get('maxDistance')
-    hide_user_id = request.args.get('hide_user_id')
+def get_posts_query_wrapper(user_id, type, minPrice, maxPrice, bodyBeginDate, bodyEndDate, lng, lat, hide_user_id ,maxDistance):
     posts = use_db(conn, get_posts_query(user_id, type, minPrice, maxPrice, hide_user_id), many=True)
     parsed_posts = []
     for post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, is_blocked, location, price, services, title, type, user_id, wallet_id, room_transaction, in posts:
@@ -192,10 +180,64 @@ def search_posts():
                                  "is_blocked": is_blocked, "type": type, "title": title, "description": description,
                                  "availability_dates": availability_dates, "availability_type": availability_type,
                                  "bathrooms": bathrooms, "bedrooms": bedrooms, "beds": beds,
-                                 "beds_distribution": beds_distribution,
+                                 "beds_distribution": beds_distribution, "recommended" : False,
                                  "guests": guests, "images": images, "location": location,
                                  "services": services, "wallet_id": wallet_id, "room_transaction": room_transaction})
-    return make_response(jsonify(parsed_posts), 200)
+    return parsed_posts
+
+def loose_filters(minPrice, maxPrice, beginDate, endDate, maxDistance):
+    loosenMinPrice = None
+    loosenMaxPrice = None
+    loosenBeginDate = None
+    loosenEndDate = None
+    loosenMaxDistance = None
+    if beginDate and endDate:
+        beginDate = datetime.datetime.strptime(beginDate, '%Y-%m-%d')
+        endDate = datetime.datetime.strptime(endDate, '%Y-%m-%d')
+        diffDays = (endDate - beginDate).days
+        loosenBeginDate = beginDate + datetime.timedelta(days=floor(diffDays/5))
+        loosenEndDate = endDate - datetime.timedelta(days=floor(diffDays/5))
+        loosenBeginDate = loosenBeginDate.strftime('%Y-%m-%d')
+        loosenEndDate = loosenEndDate.strftime('%Y-%m-%d')
+    if maxDistance:
+        loosenMaxDistance = maxDistance * 2
+    if minPrice:
+        loosenMinPrice = float(minPrice) * 0.75
+    if maxPrice:
+        loosenMaxPrice = float(maxPrice) * 1.25
+    return loosenMinPrice, loosenMaxPrice, loosenBeginDate, loosenEndDate, loosenMaxDistance
+
+
+@app.route('/posts')
+def search_posts():
+    user_id = request.args.get('user_id')
+    type = request.args.get('type')
+    if type: type = type.lower()
+    minPrice = request.args.get('minPrice')
+    maxPrice = request.args.get('maxPrice')
+    bodyBeginDate = request.args.get('beginDate')
+    bodyEndDate = request.args.get('endDate')
+    lng = request.args.get('lng')
+    lat = request.args.get('lat')
+    maxDistance = request.args.get('maxDistance')
+    hide_user_id = request.args.get('hide_user_id')
+    includeRecommendations = request.args.get('includeRecommendations', False)
+    searchPosts = get_posts_query_wrapper(
+        user_id, type, minPrice, maxPrice, bodyBeginDate, bodyEndDate, lng, lat, hide_user_id, maxDistance
+    )
+    recommendedPosts = []
+    if bool(includeRecommendations):
+        minPrice, maxPrice, bodyBeginDate, bodyEndDate, maxDistance = loose_filters(
+            minPrice, maxPrice, bodyBeginDate, bodyEndDate, maxDistance
+        )
+        withRecommendedPosts = get_posts_query_wrapper(
+            user_id, type, minPrice, maxPrice, bodyBeginDate, bodyEndDate, lng, lat, hide_user_id, maxDistance
+        )
+        recommendedPosts = [post for post in withRecommendedPosts if post not in searchPosts]
+        for post in recommendedPosts:
+            post["recommended"] = True
+    print("Searched: ", len(searchPosts), " Recommended: ", len(recommendedPosts))
+    return make_response(jsonify(searchPosts + recommendedPosts), 200)
 
 
 @app.route('/bookings', methods=['GET'])
@@ -241,6 +283,8 @@ def new_booking():
                           "Desde el " + str(beginDate) + " hasta el " + str(endDate) + "|host")
         b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, = use_db(conn,
                                                                                                  add_booking_query(
+                                                                                                     body.get('host_user_id'),
+                                                                                                     body.get('host_wallet_id'),
                                                                                                      body['user_id'],
                                                                                                      body['wallet_id'],
                                                                                                      body['post_id'],
