@@ -53,6 +53,7 @@ CREATE_BOOKINGS_TABLE_CMD = "\
                     resTransaction VARCHAR(250),\
                     beginDate DATE,\
                     endDate DATE,\
+                    creationDate DATE NOT NULL DEFAULT CURRENT_DATE,\
                     PRIMARY KEY (guest_wallet_id, post_id, beginDate, endDate)\
                 );\
                 "

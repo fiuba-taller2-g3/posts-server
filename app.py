@@ -249,10 +249,10 @@ def get_bookings():
     booking_id = request.args.get('booking_id')
     bookings = use_db(conn, get_bookings_query(guest_user_id, user_id, post_id, status, booking_id), many=True)
     parsed_bookings = []
-    for b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date in bookings:
+    for b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, creation_date in bookings:
         parsed_bookings.append({"booking_id": b_id, "user_id": u_id, "wallet_id": w_id,
                                 "guest_user_id": gu_id, "guest_wallet_id": gw_id, "post_id": p_id, "status": status,
-                                "transaction": tx, "response_transaction": res_tx,
+                                "transaction": tx, "response_transaction": res_tx, "creation_date": creation_date.strftime('%Y-%m-%d'),
                                 "begin_date": begin_date.strftime('%Y-%m-%d'),
                                 "end_date": end_date.strftime('%Y-%m-%d')})
     return make_response(jsonify(parsed_bookings), 200)
@@ -281,7 +281,7 @@ def new_booking():
         # TODO Notificar al host que intentaron reservar
         send_notification(str(host_id[0]), "Intentaron reservar tu alojamiento",
                           "Desde el " + str(beginDate) + " hasta el " + str(endDate) + "|host")
-        b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, = use_db(conn,
+        b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, creation_date, = use_db(conn,
                                                                                                  add_booking_query(
                                                                                                      body.get('host_user_id'),
                                                                                                      body.get('host_wallet_id'),
@@ -296,8 +296,44 @@ def new_booking():
                                                                                                  ))
         return make_response(
             jsonify(post_id=p_id, guest_user_id=gu_id, guest_wallet_id=gw_id, booking_id=b_id,
-                    begin_date=body['begin_date'],
+                    begin_date=body['begin_date'], creation_date=creation_date.strftime('%Y-%m-%d'),
                     end_date=body['end_date'], status=status, transaction=tx), 201)
+    return make_response(response.content, 500)
+
+
+@app.route('/rejectance', methods=['POST'])
+def reject_booking():
+    body = request.json
+    roomTransaction = use_db(conn, get_post_transaction_query(body['post_id']))[0]
+    beginDate = datetime.datetime.strptime(body['begin_date'], '%Y-%m-%d')
+    endDate = datetime.datetime.strptime(body['end_date'], '%Y-%m-%d')
+    response = requests.post(payments_base_url + 'rejectance', json={"wallet_id": body['wallet_id'],
+                                                                     "guest_wallet_id": body['guest_wallet_id'],
+                                                                     "room_transaction": roomTransaction,
+                                                                     "day": beginDate.day,
+                                                                     "month": beginDate.month,
+                                                                     "year": beginDate.year,
+                                                                     "end_day": endDate.day,
+                                                                     "end_month": endDate.month,
+                                                                     "end_year": endDate.year})
+    if response.status_code == 200:
+        send_notification(body['user_id'], "Reservación rechazada", "Volvé a intentarlo" + "|guest")
+        b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, creation_date, = use_db(conn, respond_booking_query(
+            body['user_id'],
+            body['wallet_id'],
+            'rejected',
+            response.json()['rejectTransaction'],
+            body['end_date'],
+            body['begin_date'],
+            body['guest_wallet_id'],
+            body['post_id']
+        ))
+        return make_response(
+            jsonify(post_id=p_id, guest_user_id=gu_id, guest_wallet_id=gw_id, booking_id=b_id,
+                    begin_date=body['begin_date'], creation_date=creation_date.strftime('%Y-%m-%d'),
+                    user_id=u_id, wallet_id=w_id, end_date=body['end_date'], status=status, transaction=tx,
+                    rejectTrasaction=res_tx),
+            201)
     return make_response(response.content, 500)
 
 
@@ -319,7 +355,7 @@ def accept_booking():
     if response.status_code == 200:
         # TODO Notificar al guest que se acepto la reserva
         send_notification(body['user_id'], "Reservación confirmada", "¡Que disfrutes tu alojamiento!" + "|guest")
-        b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, = use_db(conn,
+        b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, creation_date, = use_db(conn,
                                                                                                  respond_booking_query(
                                                                                                      body['user_id'],
                                                                                                      body['wallet_id'],
@@ -334,13 +370,13 @@ def accept_booking():
                                                                                                  ))
         acceptResponse = make_response(
             jsonify(post_id=p_id, guest_user_id=gu_id, guest_wallet_id=gw_id, booking_id=b_id,
-                    begin_date=body['begin_date'],
+                    begin_date=body['begin_date'], creation_date=creation_date.strftime('%Y-%m-%d'),
                     user_id=u_id, wallet_id=w_id, end_date=body['end_date'], status=status, transaction=tx,
                     acceptTrasaction=res_tx), 201)
         overlappingBookings = use_db(conn,
                                      overlapping_bookings_query(body['post_id'], body['begin_date'], body['end_date']),
                                      many=True)
-        for b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date in overlappingBookings:
+        for b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, creation_date in overlappingBookings:
             response = requests.post(payments_base_url + 'rejectance', json={"wallet_id": body['wallet_id'],
                                                                              "guest_wallet_id": gw_id,
                                                                              "room_transaction": roomTransaction,
