@@ -226,9 +226,9 @@ def search_posts():
     searchPosts = get_posts_query_wrapper(
         user_id, type, minPrice, maxPrice, bodyBeginDate, bodyEndDate, lng, lat, hide_user_id, maxDistance, includeBlocked
     )
-    post_ids = request.args.get('post_ids').split(',')
+    post_ids = request.args.get('post_ids')
     if post_ids:
-        searchPosts = [post for post in searchPosts if str(post.get('id')) in post_ids]
+        searchPosts = [post for post in searchPosts if str(post.get('id')) in post_ids.split(',')]
     recommendedPosts = []
     if bool(includeRecommendations):
         minPrice, maxPrice, bodyBeginDate, bodyEndDate, maxDistance = loose_filters(
