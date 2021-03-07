@@ -354,7 +354,7 @@ def accept_booking():
                                                                      "end_year": endDate.year})
     if response.status_code == 200:
         # TODO Notificar al guest que se acepto la reserva
-        send_notification(body['user_id'], "Reservación confirmada", "¡Que disfrutes tu alojamiento!" + "|guest")
+        send_notification(body['guest_user_id'], "Reservación confirmada", "¡Que disfrutes tu alojamiento!")
         b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, creation_date, = use_db(conn,
                                                                                                  respond_booking_query(
                                                                                                      body['user_id'],
@@ -388,7 +388,7 @@ def accept_booking():
                                                                              "end_year": endDate.year})
             if response.status_code == 200:
                 # TODO Notificar al guest que se rechazo la reserva
-                send_notification(body['user_id'], "Reservación rechazada", "Volvé a intentarlo" + "|guest")
+                send_notification(body['guest_user_id'], "Reservación rechazada", "Volvé a intentarlo")
                 resValues = use_db(conn, respond_booking_query(
                     body['user_id'],
                     body['wallet_id'],
