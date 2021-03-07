@@ -259,10 +259,10 @@ def count_posts_between_dates(from_date, to_date):
 
 def count_bookings_between_dates(from_date, to_date):
     return "\
-                SELECT creation_date, COUNT(*)\
+                SELECT creationDate, COUNT(*)\
                 FROM bookings\
-                WHERE (creation_date >= '{}' AND creation_date <= '{}')\
-                GROUP BY creation_date".format(from_date, to_date)
+                WHERE (creationDate >= '{}' AND creationDate <= '{}')\
+                GROUP BY creationDate".format(from_date, to_date)
 
 
 def connect():

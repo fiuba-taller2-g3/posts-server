@@ -427,7 +427,6 @@ def metrics_posts():
     to_date = request.args.get('to_date')
     res = use_db(conn, count_posts_between_dates(from_date, to_date), many=True)
     if res is not []:
-        # res_transformed = map(lambda t: (t[0].strftime('%d-%m-%Y'), str(t[1])), res)
         return make_response(json.dumps([{"name": row[0].strftime('%d-%m-%Y'), "value": row[1]} for row in res]), 200)
     else:
         print("no hay publicaciones")
@@ -435,18 +434,17 @@ def metrics_posts():
         return make_response("{\"msg\" : \"empty\"}", 204)
 
 
-# @app.route('/bookings/metrics')
-# def metrics_bookings():
-#     from_date = request.args.get('from_date')
-#     to_date = request.args.get('to_date')
-#     res = use_db(conn, count_posts_between_dates(from_date, to_date), many=True)
-#     if res is not []:
-#         res_transformed = map(lambda t: (t[0].strftime('%d-%m-%Y'), str(t[1])), res)
-#         return make_response(json.dumps(dict(res_transformed)), 200)
-#     else:
-#         print("no hay bookings")
-#         sys.stdout.flush()
-#         return make_response("{\"msg\" : \"empty\"}", 204)
+@app.route('/bookings/metrics')
+def metrics_bookings():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    res = use_db(conn, count_bookings_between_dates(from_date, to_date), many=True)
+    if res is not []:
+        return make_response(json.dumps([{"name": row[0].strftime('%d-%m-%Y'), "value": row[1]} for row in res]), 200)
+    else:
+        print("no hay bookings")
+        sys.stdout.flush()
+        return make_response("{\"msg\" : \"empty\"}", 204)
 
 
 @app.route('/tokens', methods=['DELETE'])
