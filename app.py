@@ -155,7 +155,7 @@ def delete_post(post_id):
                 location=location, services=services,
                 wallet_id=wallet_id, room_transaction=room_transaction), 200)
 
-def get_posts_query_wrapper(user_id, type, minPrice, maxPrice, bodyBeginDate, bodyEndDate, lng, lat, hide_user_id ,maxDistance):
+def get_posts_query_wrapper(user_id, type, minPrice, maxPrice, bodyBeginDate, bodyEndDate, lng, lat, hide_user_id ,maxDistance, includeBlocked):
     posts = use_db(conn, get_posts_query(user_id, type, minPrice, maxPrice, hide_user_id), many=True)
     parsed_posts = []
     for post_id, availability_dates, availability_type, bathrooms, bedrooms, beds, beds_distribution, date, description, guests, images, is_blocked, location, price, services, title, type, user_id, wallet_id, room_transaction, in posts:
@@ -175,7 +175,7 @@ def get_posts_query_wrapper(user_id, type, minPrice, maxPrice, bodyBeginDate, bo
             beginDate = datetime.datetime.strptime(bodyBeginDate, '%Y-%m-%d')
             endDate = datetime.datetime.strptime(bodyEndDate, '%Y-%m-%d')
             availableRoom = avBeginDate <= beginDate <= avEndDate and avBeginDate <= endDate <= avEndDate
-        if not overlap and availableRoom and closeEnough and not is_blocked:
+        if not overlap and availableRoom and closeEnough and (not is_blocked or includeBlocked):
             parsed_posts.append({"id": post_id, "user_id": user_id, "price": price, "date": date.strftime('%Y-%m-%d'),
                                  "is_blocked": is_blocked, "type": type, "title": title, "description": description,
                                  "availability_dates": availability_dates, "availability_type": availability_type,
@@ -222,16 +222,21 @@ def search_posts():
     maxDistance = request.args.get('maxDistance')
     hide_user_id = request.args.get('hide_user_id')
     includeRecommendations = request.args.get('includeRecommendations', False)
+    includeBlocked = bool(request.args.get('includeBlocked', False))
     searchPosts = get_posts_query_wrapper(
-        user_id, type, minPrice, maxPrice, bodyBeginDate, bodyEndDate, lng, lat, hide_user_id, maxDistance
+        user_id, type, minPrice, maxPrice, bodyBeginDate, bodyEndDate, lng, lat, hide_user_id, maxDistance, includeBlocked
     )
+    body = request.json
+    if body:
+        includeRecommendations = False
+        searchPosts = [post for post in searchPosts if str(post.get('id')) in body.get('post_ids')]
     recommendedPosts = []
     if bool(includeRecommendations):
         minPrice, maxPrice, bodyBeginDate, bodyEndDate, maxDistance = loose_filters(
             minPrice, maxPrice, bodyBeginDate, bodyEndDate, maxDistance
         )
         withRecommendedPosts = get_posts_query_wrapper(
-            user_id, type, minPrice, maxPrice, bodyBeginDate, bodyEndDate, lng, lat, hide_user_id, maxDistance
+            user_id, type, minPrice, maxPrice, bodyBeginDate, bodyEndDate, lng, lat, hide_user_id, maxDistance, includeBlocked
         )
         recommendedPosts = [post for post in withRecommendedPosts if post not in searchPosts]
         for post in recommendedPosts:
