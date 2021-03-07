@@ -175,7 +175,7 @@ def get_posts_query_wrapper(user_id, type, minPrice, maxPrice, bodyBeginDate, bo
             beginDate = datetime.datetime.strptime(bodyBeginDate, '%Y-%m-%d')
             endDate = datetime.datetime.strptime(bodyEndDate, '%Y-%m-%d')
             availableRoom = avBeginDate <= beginDate <= avEndDate and avBeginDate <= endDate <= avEndDate
-        if not overlap and availableRoom and closeEnough:
+        if not overlap and availableRoom and closeEnough and not is_blocked:
             parsed_posts.append({"id": post_id, "user_id": user_id, "price": price, "date": date.strftime('%Y-%m-%d'),
                                  "is_blocked": is_blocked, "type": type, "title": title, "description": description,
                                  "availability_dates": availability_dates, "availability_type": availability_type,
