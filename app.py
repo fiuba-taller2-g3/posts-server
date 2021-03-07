@@ -133,7 +133,7 @@ def edit_post(post_id):
                 bathrooms=bathrooms, bedrooms=bedrooms, beds=beds, beds_distribution=beds_distribution, guests=guests,
                 images=images,
                 location=location, services=services,
-                wallet_id=wallet_id, room_transaction=room_transaction), 201)
+                wallet_id=wallet_id, room_transaction=room_transaction, status="ok"), 201)
 
 
 @app.route('/posts/<post_id>', methods=['DELETE'])
