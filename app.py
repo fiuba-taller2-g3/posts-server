@@ -354,7 +354,7 @@ def accept_booking():
                                                                      "end_year": endDate.year})
     if response.status_code == 200:
         # TODO Notificar al guest que se acepto la reserva
-        send_notification(body['user_id'], "Reservación confirmada", "¡Que disfrutes tu alojamiento!" + "|guest")
+        send_notification(body['guest_user_id'], "Reservación confirmada", "¡Que disfrutes tu alojamiento!")
         b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, creation_date, = use_db(conn,
                                                                                                  respond_booking_query(
                                                                                                      body['user_id'],
@@ -388,7 +388,7 @@ def accept_booking():
                                                                              "end_year": endDate.year})
             if response.status_code == 200:
                 # TODO Notificar al guest que se rechazo la reserva
-                send_notification(body['user_id'], "Reservación rechazada", "Volvé a intentarlo" + "|guest")
+                send_notification(body['guest_user_id'], "Reservación rechazada", "Volvé a intentarlo")
                 resValues = use_db(conn, respond_booking_query(
                     body['user_id'],
                     body['wallet_id'],
@@ -427,7 +427,6 @@ def metrics_posts():
     to_date = request.args.get('to_date')
     res = use_db(conn, count_posts_between_dates(from_date, to_date), many=True)
     if res is not []:
-        # res_transformed = map(lambda t: (t[0].strftime('%d-%m-%Y'), str(t[1])), res)
         return make_response(json.dumps([{"name": row[0].strftime('%d-%m-%Y'), "value": row[1]} for row in res]), 200)
     else:
         print("no hay publicaciones")
@@ -435,18 +434,17 @@ def metrics_posts():
         return make_response("{\"msg\" : \"empty\"}", 204)
 
 
-# @app.route('/bookings/metrics')
-# def metrics_bookings():
-#     from_date = request.args.get('from_date')
-#     to_date = request.args.get('to_date')
-#     res = use_db(conn, count_posts_between_dates(from_date, to_date), many=True)
-#     if res is not []:
-#         res_transformed = map(lambda t: (t[0].strftime('%d-%m-%Y'), str(t[1])), res)
-#         return make_response(json.dumps(dict(res_transformed)), 200)
-#     else:
-#         print("no hay bookings")
-#         sys.stdout.flush()
-#         return make_response("{\"msg\" : \"empty\"}", 204)
+@app.route('/bookings/metrics')
+def metrics_bookings():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    res = use_db(conn, count_bookings_between_dates(from_date, to_date), many=True)
+    if res is not []:
+        return make_response(json.dumps([{"name": row[0].strftime('%d-%m-%Y'), "value": row[1]} for row in res]), 200)
+    else:
+        print("no hay bookings")
+        sys.stdout.flush()
+        return make_response("{\"msg\" : \"empty\"}", 204)
 
 
 @app.route('/tokens', methods=['DELETE'])
