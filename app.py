@@ -412,8 +412,11 @@ def accept_booking():
 # endpoint para pruebas internas
 @app.route('/notifications', methods=['POST'])
 def notifications():
-    user_id = request.args.get('user_id')
-    result = send_notification(str(user_id), "default title", "default message")
+    user_id = request.json.body['user_id']
+    msg_title = request.json.body['msg_title']
+    msg_body = request.json.body['msg_body']
+
+    result = send_notification(str(user_id), msg_title, msg_body)
     print(result)
 
     return make_response(result, 200)
