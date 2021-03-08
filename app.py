@@ -284,7 +284,7 @@ def new_booking():
         sys.stdout.flush()
         # TODO Notificar al host que intentaron reservar
         send_notification(str(host_id[0]), "Intentaron reservar tu alojamiento",
-                          "Desde el " + str(beginDate) + " hasta el " + str(endDate) + "|host")
+                          "Desde el " + str(beginDate) + " hasta el " + str(endDate))
         b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, creation_date, = use_db(conn,
                                                                                                  add_booking_query(
                                                                                                      body.get('host_user_id'),
@@ -321,7 +321,7 @@ def reject_booking():
                                                                      "end_month": endDate.month,
                                                                      "end_year": endDate.year})
     if response.status_code == 200:
-        send_notification(body['user_id'], "Reservación rechazada", "Volvé a intentarlo" + "|guest")
+        send_notification(body['guest_user_id'], "Reservación rechazada", "Volvé a intentarlo")
         b_id, u_id, w_id, gu_id, gw_id, p_id, status, tx, res_tx, begin_date, end_date, creation_date, = use_db(conn, respond_booking_query(
             body['user_id'],
             body['wallet_id'],
@@ -412,8 +412,11 @@ def accept_booking():
 # endpoint para pruebas internas
 @app.route('/notifications', methods=['POST'])
 def notifications():
-    user_id = request.args.get('user_id')
-    result = send_notification(str(user_id), "default title", "default message")
+    user_id = request.json['user_id']
+    msg_title = request.json['msg_title']
+    msg_body = request.json['msg_body']
+
+    result = send_notification(str(user_id), msg_title, msg_body)
     print(result)
 
     return make_response(result, 200)
