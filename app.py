@@ -384,12 +384,12 @@ def accept_booking():
             response = requests.post(payments_base_url + 'rejectance', json={"wallet_id": body['wallet_id'],
                                                                              "guest_wallet_id": gw_id,
                                                                              "room_transaction": roomTransaction,
-                                                                             "day": beginDate.day,
-                                                                             "month": beginDate.month,
-                                                                             "year": beginDate.year,
-                                                                             "end_day": endDate.day,
-                                                                             "end_month": endDate.month,
-                                                                             "end_year": endDate.year})
+                                                                             "day": begin_date.day,
+                                                                             "month": begin_date.month,
+                                                                             "year": begin_date.year,
+                                                                             "end_day": end_date.day,
+                                                                             "end_month": end_date.month,
+                                                                             "end_year": end_date.year})
             if response.status_code == 200:
                 # TODO Notificar al guest que se rechazo la reserva
                 send_notification(body['guest_user_id'], "Reservación rechazada", "Volvé a intentarlo")
