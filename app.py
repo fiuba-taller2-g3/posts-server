@@ -392,7 +392,7 @@ def accept_booking():
                                                                              "end_year": end_date.year})
             if response.status_code == 200:
                 # TODO Notificar al guest que se rechazo la reserva
-                send_notification(body['guest_user_id'], "Reservación rechazada", "Volvé a intentarlo")
+                send_notification(str(gu_id), "Reservación rechazada", "Volvé a intentarlo")
                 resValues = use_db(conn, respond_booking_query(
                     body['user_id'],
                     body['wallet_id'],
